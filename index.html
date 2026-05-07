@@ -379,26 +379,57 @@
             const matches = all.filter(x => x.dni === dni || x.tel === dni);
             const last = matches[matches.length - 1];
             if (last) {
-                const esRetirado = last.estado.toUpperCase() === "RETIRADO CON REPARACION";
-                const extraInfo = esRetirado ? `
-                    <hr style="border-color:rgba(255,255,255,0.3); margin:12px 0">
-                    <p><strong>📋 Falla reportada:</strong><br>${last.falla || 'No especificada'}</p>
-                    <p><strong>🔍 Diagnóstico técnico:</strong><br>${last.diagnostico || 'No especificado'}</p>
-                    <p><strong>🔧 Reparación realizada:</strong><br>${last.reparacion || 'No especificada'}</p>
-                ` : `
-                    <hr style="border-color:rgba(255,255,255,0.3); margin:12px 0">
-                    <p><strong>Diagnóstico:</strong> ${last.diagnostico || 'Pendiente'}</p>
-                `;
-                res.innerHTML = `<div style="background:var(--primary);color:white;padding:20px;border-radius:10px;">
-                    <h3 style="margin-top:0">👤 ${last.nombre}</h3>
-                    <p><strong>Estado:</strong> <span style="background:${esRetirado ? '#27ae60' : '#2980b9'};padding:3px 10px;border-radius:4px;">${last.estado}</span></p>
-                    <p>N° Orden: ${last.orden} | Equipo: ${last.modelo}</p>
-                    <p>Ingreso: ${formatDate(last.fechaIn)} | Salida: ${formatDate(last.fechaOut)}</p>
-                    <p>Garantía: ${calculateWarranty(last.fechaOut, last.garantiaDias)}</p>
-                    <p>Precio: $${last.precio || 'A confirmar'}</p>
-                    ${extraInfo}
-                </div>`;
-            } else { res.innerHTML = "<p style='color:red;text-align:center;'>No encontrado.</p>"; }
+                const estadoUp = last.estado.toUpperCase();
+                const estadosPermitidos = [
+                    "RETIRADO CON REPARACION",
+                    "NO VISTO",
+                    "LISTO",
+                    "GARANTIA",
+                    "LISTO AVISADO",
+                    "EN BANCO",
+                    "CONFIRMADO",
+                    "RECHAZADO",
+                    "PARA LA COMPRA",
+                    "CONSIGNACION",
+                    "VENDIDO"
+                ];
+                const esRetirado = estadoUp === "RETIRADO CON REPARACION";
+
+                if (!estadosPermitidos.includes(estadoUp)) {
+                    res.innerHTML = `
+                        <div style="background:#c0392b;color:white;padding:25px;border-radius:10px;text-align:center;">
+                            <h3 style="margin-top:0">⚠️ ${last.nombre}</h3>
+                            <p style="font-size:1.1em;font-weight:bold;letter-spacing:1px;">NO TE PUEDO DAR EL INFORME</p>
+                            <p>SI ES NECESARIO COMUNICATE AL WHATSAPP</p>
+                            <a href="https://wa.me/5493515300344" target="_blank"
+                               style="display:inline-block;margin-top:12px;background:white;color:#c0392b;padding:10px 22px;border-radius:6px;font-weight:bold;text-decoration:none;">
+                               📲 Ir al WhatsApp
+                            </a>
+                        </div>`;
+                } else {
+                    const extraInfo = esRetirado ? `
+                        <hr style="border-color:rgba(255,255,255,0.3);margin:12px 0">
+                        <p><strong>📋 Falla reportada:</strong><br>${last.falla || 'No especificada'}</p>
+                        <p><strong>🔍 Diagnóstico técnico:</strong><br>${last.diagnostico || 'No especificado'}</p>
+                        <p><strong>🔧 Reparación realizada:</strong><br>${last.reparacion || 'No especificada'}</p>
+                    ` : `
+                        <hr style="border-color:rgba(255,255,255,0.3);margin:12px 0">
+                        <p><strong>Diagnóstico:</strong> ${last.diagnostico || 'Pendiente'}</p>
+                    `;
+                    res.innerHTML = `
+                        <div style="background:var(--primary);color:white;padding:20px;border-radius:10px;">
+                            <h3 style="margin-top:0">👤 ${last.nombre}</h3>
+                            <p><strong>Estado:</strong> <span style="background:${esRetirado ? '#27ae60' : '#2980b9'};padding:3px 10px;border-radius:4px;">${last.estado}</span></p>
+                            <p>N° Orden: ${last.orden} | Equipo: ${last.modelo}</p>
+                            <p>Ingreso: ${formatDate(last.fechaIn)} | Salida: ${formatDate(last.fechaOut)}</p>
+                            <p>Garantía: ${calculateWarranty(last.fechaOut, last.garantiaDias)}</p>
+                            <p>Precio: $${last.precio || 'A confirmar'}</p>
+                            ${extraInfo}
+                        </div>`;
+                }
+            } else {
+                res.innerHTML = "<p style='color:red;text-align:center;'>No encontrado.</p>";
+            }
         } catch(e) { res.innerHTML = "<p style='color:red;'>Error: " + e.message + "</p>"; }
         loading(false);
     };
