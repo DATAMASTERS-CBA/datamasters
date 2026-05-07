@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Masters - Gestión Técnica Profesional</title>
+    <style>
+        :root { --primary: #1a252f; --accent: #2980b9; --warning: #f39c12; --danger: #e74c3c; --success: #27ae60; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #333; }
+        .container { max-width: 1350px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 4px solid var(--primary); margin-bottom: 20px; padding-bottom: 15px; }
+        .info-bar { font-size: 0.9em; background: #eee; padding: 8px; border-radius: 5px; margin-top: 10px; }
+        #logo-display { max-height: 100px; border-radius: 5px; margin-bottom: 10px; }
+        nav { display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
+        button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; color: white; transition: 0.3s; }
+        .btn-admin { background: var(--primary); }
+        .btn-client { background: var(--accent); }
+        .btn-save { background: var(--success); width: 100%; font-size: 1.1em; margin-top: 10px; }
+        .btn-search { background: #8e44ad; }
+        .btn-del { background: var(--danger); padding: 5px 8px; font-size: 0.8em; }
+        .section { display: none; }
+        .active { display: block; }
+        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; background: #f9f9f9; padding: 20px; border-radius: 10px; border: 1px solid #ddd; }
+        .full { grid-column: 1 / -1; }
+        input, select, textarea { padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 100%; box-sizing: border-box; }
+        .table-container { overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 0.85em; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background: var(--primary); color: white; }
+        .status-no-visto { background-color: #fff3cd !important; font-weight: bold; }
+        .row-reentry { border-left: 8px solid var(--danger) !important; background-color: #fdf2f2; }
+        .blink { animation: blinker 1.5s linear infinite; color: var(--danger); font-weight: bold; }
+        @keyframes blinker { 50% { opacity: 0; } }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+        .modal-content { background: white; margin: 5% auto; padding: 25px; width: 85%; border-radius: 10px; max-height: 85vh; overflow-y: auto; position: relative; }
+        .close { position: absolute; right: 20px; top: 10px; font-size: 28px; cursor: pointer; color: var(--danger); font-weight: bold; }
+        #loading-overlay { display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); color:white; font-size:1.5em; align-items:center; justify-content:center; }
+    </style>
+</head>
+<body>
+
+<div id="loading-overlay">⏳ Cargando...</div>
+
+<div class="container">
+    <div class="header">
+        <img id="logo-display" src="" alt="Logo" style="display:none">
+        <div class="info-bar">
+            <strong>DATA MASTERS</strong> | WhatsApp: 351-5300344 | Lun a Vie 10:00 a 18:00
+        </div>
+    </div>
+
+    <nav>
+        <button class="btn-client" onclick="showSection('cliente-view')">CONSULTA CLIENTE</button>
+        <button class="btn-admin" onclick="checkAdmin()">PANEL ADMINISTRADOR</button>
+    </nav>
+
+    <!-- VISTA CLIENTE -->
+    <div id="cliente-view" class="section active">
+        <div style="max-width: 500px; margin: auto; padding: 25px; border: 2px solid var(--accent); border-radius: 10px; background: #fff;">
+            <h3 style="text-align:center; color: var(--accent);">Seguimiento Online</h3>
+            <input type="text" id="dni-consulta" placeholder="Ingrese su TEL O DNI">
+            <button class="btn-client" onclick="consultaCliente()" style="width:100%; margin-top:15px">VER ESTADO DE MI EQUIPO</button>
+            <div id="res-consulta" style="margin-top:20px"></div>
+        </div>
+    </div>
+
+    <!-- VISTA ADMINISTRADOR -->
+    <div id="admin-view" class="section">
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 12px; border-radius: 8px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <strong>LOGO:</strong> <input type="file" id="logo-input" accept="image/*" onchange="loadLogo(event)" style="font-size: 0.8em;">
+            </div>
+            <div>
+                <button onclick="downloadBackup()" style="background: #6c757d; font-size: 0.85em;">💾 GUARDAR RESPALDO</button>
+                <button onclick="document.getElementById('file-backup').click()" style="background: #6c757d; font-size: 0.85em;">📂 CARGAR BASE</button>
+                <input type="file" id="file-backup" style="display:none" onchange="loadBackup(event)">
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 id="form-title" style="margin:0;">Nueva Orden de Trabajo</h3>
+            <button class="btn-search" onclick="openSearchClientModal()">🔍 BUSCAR CLIENTE EXISTENTE</button>
+        </div>
+
+        <form id="order-form" class="grid-form">
+            <input type="hidden" id="edit-id">
+            <input type="text" id="orden-num" placeholder="N° Seguimiento" readonly style="background:#ddd">
+            <input type="text" id="nombre" placeholder="Nombre y Apellido Cliente" required>
+            <input type="text" id="dni" placeholder="DNI" required>
+            <input type="text" id="tel" placeholder="Teléfono" required>
+            <input type="text" id="modelo" placeholder="Modelo del Equipo / Elemento" required>
+            <input type="text" id="serie" placeholder="N° de Serie" required>
+            <input type="text" id="accesorios" placeholder="Accesorios que deja">
+            <div><label><small>Fecha Ingreso:</small></label><input type="date" id="fecha-in"></div>
+            <div><label><small>Fecha Salida:</small></label><input type="date" id="fecha-out"></div>
+            <select id="estado">
+                <option value="No Visto">No Visto</option>
+                <option value="LISTO">LISTO</option>
+                <option value="LISTO AVISADO">LISTO AVISADO</option>
+                <option value="EN BANCO">EN BANCO</option>
+                <option value="CONFIRMADO">CONFIRMADO</option>
+                <option value="RECHAZADO">RECHAZADO</option>
+                <option value="PARA LA COMPRA">PARA LA COMPRA</option>
+                <option value="CONSIGNACION">CONSIGNACION</option>
+                <option value="VENDIDO">VENDIDO</option>
+                <option value="RETIRADO SIN REPARACION">RETIRADO SIN REPARACION</option>
+                <option value="RETIRADO CON REPARACION">RETIRADO CON REPARACION</option>
+                <option value="GARANTIA">GARANTIA</option>
+                <option value="ABANDONADO">ABANDONADO</option>
+            </select>
+            <input type="number" id="garantia-inicial" placeholder="Días de Garantía (Total)">
+            <input type="number" id="precio" placeholder="Precio Final $">
+            <textarea id="falla" class="full" placeholder="Falla reportada..."></textarea>
+            <textarea id="diagnostico" class="full" placeholder="Diagnóstico técnico..."></textarea>
+            <textarea id="reparacion" class="full" placeholder="Detalle de reparación..."></textarea>
+            <div class="full" style="display:flex; gap:10px">
+                <button type="button" onclick="saveOrder()" class="btn-save">GUARDAR / ACTUALIZAR ORDEN</button>
+                <button type="button" onclick="resetForm()" style="background:#95a5a6; margin-top:10px">LIMPIAR</button>
+            </div>
+        </form>
+
+        <hr style="margin:40px 0">
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="admin-search" placeholder="Buscar historial por DNI, Nombre, Teléfono o Serie...">
+            <button class="btn-admin" onclick="renderAdminList()">BUSCAR</button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Orden</th><th>Ingreso</th><th>Salida</th><th>Cliente</th>
+                        <th>Teléfono</th><th>Serie</th><th>Estado</th><th>Garantía</th><th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL BUSCAR CLIENTE -->
+<div id="modalSearchClient" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeSearchModal()">&times;</span>
+        <h3>Buscar Cliente en Base de Datos</h3>
+        <input type="text" id="input-search-client" placeholder="DNI, Nombre o Teléfono..." onkeyup="filterClients()">
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>Acción</th></tr></thead>
+                <tbody id="search-client-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL HISTORIAL -->
+<div id="modalHistory" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="modal-title">Historial Detallado</h2>
+        <div id="modal-data"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCXnxWmBJkS86_MQKOTa4QaQb0B9Z7K-cY",
+        authDomain: "datamasters-590f6.firebaseapp.com",
+        projectId: "datamasters-590f6",
+        storageBucket: "datamasters-590f6.firebasestorage.app",
+        messagingSenderId: "244192305030",
+        appId: "1:244192305030:web:7b502ac237b2f69bfd5607",
+        measurementId: "G-1SXCR0KQJ4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const COLL = "orders";
+    const ADMIN_PASS = "**/**/****";
+
+    let orders = [];
+    let orderCounter = parseInt(localStorage.getItem('dm_counter')) || 1001;
+
+    function loading(show) {
+        document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return "---";
+        const parts = dateStr.split('-');
+        return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
+    }
+
+    function calculateWarranty(fechaSalida, diasGarantia) {
+        if (!fechaSalida || !diasGarantia || diasGarantia <= 0) return "---";
+        const diff = Math.floor((new Date() - new Date(fechaSalida)) / (1000 * 60 * 60 * 24));
+        const restante = diasGarantia - diff;
+        return restante <= 0 ? `<span style="color:red">FUERA DE GARANTIA</span>` : `<span style="color:green">${restante} días</span>`;
+    }
+
+    window.showSection = (id) => {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    };
+
+    window.checkAdmin = () => {
+        if (prompt("Clave de Administrador:") === ADMIN_PASS) {
+            showSection('admin-view');
+            loadOrders();
+        } else { alert("Clave Incorrecta"); }
+    };
+
+    async function loadOrders() {
+        loading(true);
+        try {
+            const snap = await getDocs(collection(db, COLL));
+            orders = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+            renderAdminList();
+        } catch(e) { alert("Error al cargar datos: " + e.message); }
+        loading(false);
+    }
+
+    window.saveOrder = async () => {
+        const editId = document.getElementById('edit-id').value;
+        let numOrden = document.getElementById('orden-num').value;
+        if (!editId) { numOrden = "DM-" + orderCounter; orderCounter++; localStorage.setItem('dm_counter', orderCounter); }
+
+        const newOrder = {
+            id: editId || Date.now().toString(),
+            orden: numOrden,
+            nombre: document.getElementById('nombre').value,
+            dni: document.getElementById('dni').value,
+            tel: document.getElementById('tel').value,
+            modelo: document.getElementById('modelo').value,
+            serie: document.getElementById('serie').value,
+            accesorios: document.getElementById('accesorios').value,
+            fechaIn: document.getElementById('fecha-in').value,
+            fechaOut: document.getElementById('fecha-out').value,
+            estado: document.getElementById('estado').value,
+            garantiaDias: parseInt(document.getElementById('garantia-inicial').value) || 0,
+            precio: document.getElementById('precio').value,
+            falla: document.getElementById('falla').value,
+            diagnostico: document.getElementById('diagnostico').value,
+            reparacion: document.getElementById('reparacion').value
+        };
+
+        loading(true);
+        try {
+            if (editId) {
+                const existing = orders.find(o => o.id === editId);
+                await updateDoc(doc(db, COLL, existing._docId), newOrder);
+            } else {
+                await addDoc(collection(db, COLL), newOrder);
+            }
+            await loadOrders();
+            resetForm();
+            alert("Orden guardada.");
+        } catch(e) { alert("Error al guardar: " + e.message); }
+        loading(false);
+    };
+
+    window.deleteOrder = async (id) => {
+        if (!confirm("¿Eliminar permanentemente?")) return;
+        const existing = orders.find(o => o.id === id);
+        loading(true);
+        try {
+            await deleteDoc(doc(db, COLL, existing._docId));
+            await loadOrders();
+        } catch(e) { alert("Error al eliminar: " + e.message); }
+        loading(false);
+    };
+
+    window.renderAdminList = () => {
+        const query = document.getElementById('admin-search').value.toLowerCase();
+        const tbody = document.getElementById('admin-table-body');
+        tbody.innerHTML = "";
+        let filtered = [...orders].sort((a, b) => {
+            if (a.estado === "No Visto" && b.estado !== "No Visto") return -1;
+            if (a.estado !== "No Visto" && b.estado === "No Visto") return 1;
+            return new Date(a.fechaIn) - new Date(b.fechaIn);
+        });
+        if (!query) {
+            const ocultar = ["VENDIDO","RETIRADO SIN REPARACION","RETIRADO CON REPARACION","ABANDONADO"];
+            filtered = filtered.filter(o => !ocultar.includes(o.estado.toUpperCase()));
+        } else {
+            filtered = filtered.filter(o => o.nombre.toLowerCase().includes(query) || o.dni.includes(query) || o.tel.includes(query) || o.serie.toLowerCase().includes(query));
+        }
+        filtered.forEach(o => {
+            const reentry = orders.some(x => x.serie === o.serie && x.dni !== o.dni);
+            const cl = o.estado === "No Visto" ? "status-no-visto" : (reentry ? "row-reentry" : "");
+            tbody.innerHTML += `<tr class="${cl}">
+                <td><b>${o.orden}</b></td>
+                <td>${formatDate(o.fechaIn)}</td><td>${formatDate(o.fechaOut)}</td>
+                <td><a href="#" onclick="openHistoryModal('${o.dni}')">${o.nombre}</a></td>
+                <td>${o.tel}</td>
+                <td>${o.serie}${reentry ? '<br><span class="blink">¡RE-INGRESO!</span>' : ''}</td>
+                <td>${o.estado}</td>
+                <td>${calculateWarranty(o.fechaOut, o.garantiaDias)}</td>
+                <td>
+                    <button class="btn-client" style="padding:5px" onclick="editOrder('${o.id}')">✏️</button>
+                    <button class="btn-del" onclick="deleteOrder('${o.id}')">🗑️</button>
+                </td>
+            </tr>`;
+        });
+    };
+
+    window.openSearchClientModal = () => { document.getElementById('modalSearchClient').style.display = "block"; filterClients(); };
+    window.closeSearchModal = () => { document.getElementById('modalSearchClient').style.display = "none"; };
+
+    window.filterClients = () => {
+        const q = document.getElementById('input-search-client').value.toLowerCase();
+        const body = document.getElementById('search-client-body');
+        body.innerHTML = "";
+        const map = new Map();
+        for (const item of orders) { if (!map.has(item.dni)) map.set(item.dni, {nombre: item.nombre, dni: item.dni, tel: item.tel}); }
+        [...map.values()].filter(c => c.nombre.toLowerCase().includes(q) || c.dni.includes(q) || c.tel.includes(q)).forEach(c => {
+            body.innerHTML += `<tr><td>${c.nombre}</td><td>${c.dni}</td><td>${c.tel}</td>
+                <td><button onclick="selectClient('${c.dni}')" style="background:var(--success);padding:5px;">SELECCIONAR</button></td></tr>`;
+        });
+    };
+
+    window.selectClient = (dni) => {
+        const c = orders.find(o => o.dni === dni);
+        document.getElementById('nombre').value = c.nombre;
+        document.getElementById('dni').value = c.dni;
+        document.getElementById('tel').value = c.tel;
+        closeSearchModal();
+    };
+
+    window.editOrder = (id) => {
+        const o = orders.find(x => x.id === id);
+        document.getElementById('edit-id').value = o.id;
+        document.getElementById('orden-num').value = o.orden;
+        document.getElementById('nombre').value = o.nombre;
+        document.getElementById('dni').value = o.dni;
+        document.getElementById('tel').value = o.tel;
+        document.getElementById('modelo').value = o.modelo;
+        document.getElementById('serie').value = o.serie;
+        document.getElementById('accesorios').value = o.accesorios;
+        document.getElementById('fecha-in').value = o.fechaIn;
+        document.getElementById('fecha-out').value = o.fechaOut;
+        document.getElementById('estado').value = o.estado;
+        document.getElementById('garantia-inicial').value = o.garantiaDias;
+        document.getElementById('precio').value = o.precio;
+        document.getElementById('falla').value = o.falla;
+        document.getElementById('diagnostico').value = o.diagnostico;
+        document.getElementById('reparacion').value = o.reparacion;
+        window.scrollTo(0, 0);
+    };
+
+    window.openHistoryModal = (dni) => {
+        const matches = orders.filter(o => o.dni === dni);
+        document.getElementById('modal-title').innerText = "Historial: " + matches[0].nombre;
+        document.getElementById('modal-data').innerHTML = matches.map(o => `
+            <div style="border:1px solid #ddd;padding:15px;margin-bottom:10px;border-radius:8px;">
+                <p><strong>N° Orden:</strong> ${o.orden} | <strong>Estado:</strong> ${o.estado}</p>
+                <p><strong>Ingreso:</strong> ${formatDate(o.fechaIn)} | <strong>Salida:</strong> ${formatDate(o.fechaOut)}</p>
+                <p><strong>Equipo:</strong> ${o.modelo} | <strong>Garantía:</strong> ${calculateWarranty(o.fechaOut, o.garantiaDias)}</p>
+                <p><strong>Diagnóstico:</strong> ${o.diagnostico || '---'}</p>
+                <p><strong>Precio:</strong> $${o.precio || '0'}</p>
+            </div>`).join('');
+        document.getElementById('modalHistory').style.display = "block";
+    };
+
+    window.closeModal = () => { document.getElementById('modalHistory').style.display = "none"; };
+
+    window.consultaCliente = async () => {
+        const dni = document.getElementById('dni-consulta').value.trim();
+        const res = document.getElementById('res-consulta');
+        if (!dni) { res.innerHTML = "<p style='color:red;text-align:center;'>Ingrese su DNI o Teléfono.</p>"; return; }
+        loading(true);
+        try {
+            const snap = await getDocs(collection(db, COLL));
+            const all = snap.docs.map(d => d.data());
+            const matches = all.filter(x => x.dni === dni || x.tel === dni);
+            const last = matches[matches.length - 1];
+            if (last) {
+                res.innerHTML = `<div style="background:var(--primary);color:white;padding:20px;border-radius:10px;">
+                    <h3>Estado: ${last.estado}</h3>
+                    <p>N° Orden: ${last.orden} | Equipo: ${last.modelo}</p>
+                    <p>Ingreso: ${formatDate(last.fechaIn)} | Salida: ${formatDate(last.fechaOut)}</p>
+                    <p>Garantía: ${calculateWarranty(last.fechaOut, last.garantiaDias)}</p>
+                    <hr><p>Diagnóstico: ${last.diagnostico || 'Pendiente'}</p>
+                    <p>Precio: $${last.precio || 'A confirmar'}</p>
+                </div>`;
+            } else { res.innerHTML = "<p style='color:red;text-align:center;'>No encontrado.</p>"; }
+        } catch(e) { res.innerHTML = "<p style='color:red;'>Error: " + e.message + "</p>"; }
+        loading(false);
+    };
+
+    window.downloadBackup = () => {
+        const data = JSON.stringify({ orders, counter: orderCounter }, null, 2);
+        const link = document.createElement('a');
+        link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(data);
+        link.download = `Respaldo_DataMasters_${new Date().toLocaleDateString().replace(/\//g,'-')}.json`;
+        link.click();
+    };
+
+    window.loadBackup = async (e) => {
+        const reader = new FileReader();
+        reader.onload = async (x) => {
+            const imported = JSON.parse(x.target.result);
+            const importedOrders = imported.orders || [];
+            orderCounter = imported.counter || 1001;
+            localStorage.setItem('dm_counter', orderCounter);
+            loading(true);
+            try {
+                for (const o of importedOrders) { await addDoc(collection(db, COLL), o); }
+                await loadOrders();
+                alert(`${importedOrders.length} órdenes importadas correctamente.`);
+            } catch(err) { alert("Error al importar: " + err.message); }
+            loading(false);
+        };
+        reader.readAsText(e.target.files[0]);
+    };
+
+    window.resetForm = () => {
+        document.getElementById('order-form').reset();
+        document.getElementById('edit-id').value = "";
+        document.getElementById('orden-num').value = "";
+    };
+
+    window.loadLogo = (e) => {
+        const reader = new FileReader();
+        reader.onload = (x) => {
+            const img = document.getElementById('logo-display');
+            img.src = x.target.result;
+            img.style.display = 'block';
+            localStorage.setItem('dm_logo', x.target.result);
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    };
+
+    window.onload = () => {
+        const logo = localStorage.getItem('dm_logo');
+        if (logo) { const img = document.getElementById('logo-display'); img.src = logo; img.style.display = 'block'; }
+    };
+</script>
+</body>
+</html>
