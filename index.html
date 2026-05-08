@@ -54,7 +54,6 @@
         <button class="btn-admin" onclick="checkAdmin()">PANEL ADMINISTRADOR</button>
     </nav>
 
-    <!-- VISTA CLIENTE -->
     <div id="cliente-view" class="section active">
         <div style="max-width: 500px; margin: auto; padding: 25px; border: 2px solid var(--accent); border-radius: 10px; background: #fff;">
             <h3 style="text-align:center; color: var(--accent);">Seguimiento Online</h3>
@@ -64,7 +63,6 @@
         </div>
     </div>
 
-    <!-- VISTA ADMINISTRADOR -->
     <div id="admin-view" class="section">
         <div style="display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 12px; border-radius: 8px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
             <div style="display: flex; gap: 10px; align-items: center;">
@@ -139,7 +137,6 @@
     </div>
 </div>
 
-<!-- MODAL BUSCAR CLIENTE -->
 <div id="modalSearchClient" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeSearchModal()">&times;</span>
@@ -154,7 +151,6 @@
     </div>
 </div>
 
-<!-- MODAL HISTORIAL -->
 <div id="modalHistory" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeModal()">&times;</span>
@@ -352,22 +348,27 @@
         window.scrollTo(0, 0);
     };
 
+    // ── HISTORIAL ADMIN: muestra todos los detalles ───────────
     window.openHistoryModal = (dni) => {
         const matches = orders.filter(o => o.dni === dni);
         document.getElementById('modal-title').innerText = "Historial: " + matches[0].nombre;
         document.getElementById('modal-data').innerHTML = matches.map(o => `
-            <div style="border:1px solid #ddd;padding:15px;margin-bottom:10px;border-radius:8px;">
+            <div style="border:1px solid #ddd;padding:15px;margin-bottom:15px;border-radius:8px;">
                 <p><strong>N° Orden:</strong> ${o.orden} | <strong>Estado:</strong> ${o.estado}</p>
                 <p><strong>Ingreso:</strong> ${formatDate(o.fechaIn)} | <strong>Salida:</strong> ${formatDate(o.fechaOut)}</p>
-                <p><strong>Equipo:</strong> ${o.modelo} | <strong>Garantía:</strong> ${calculateWarranty(o.fechaOut, o.garantiaDias)}</p>
-                <p><strong>Diagnóstico:</strong> ${o.diagnostico || '---'}</p>
-                <p><strong>Precio:</strong> $${o.precio || '0'}</p>
+                <p><strong>Equipo:</strong> ${o.modelo} | <strong>Serie:</strong> ${o.serie || '---'}</p>
+                <p><strong>Garantía:</strong> ${calculateWarranty(o.fechaOut, o.garantiaDias)} | <strong>Precio:</strong> $${o.precio || '0'}</p>
+                <hr style="margin:10px 0;border-color:#eee">
+                <p><strong>📋 Falla reportada:</strong><br><span style="color:#555">${o.falla || '---'}</span></p>
+                <p><strong>🔍 Diagnóstico técnico:</strong><br><span style="color:#555">${o.diagnostico || '---'}</span></p>
+                <p><strong>🔧 Trabajo realizado:</strong><br><span style="color:#555">${o.reparacion || '---'}</span></p>
             </div>`).join('');
         document.getElementById('modalHistory').style.display = "block";
     };
 
     window.closeModal = () => { document.getElementById('modalHistory').style.display = "none"; };
 
+    // ── CONSULTA CLIENTE PÚBLICO ──────────────────────────────
     window.consultaCliente = async () => {
         const dni = document.getElementById('dni-consulta').value.trim();
         const res = document.getElementById('res-consulta');
@@ -381,25 +382,19 @@
             if (last) {
                 const estadoUp = last.estado.toUpperCase();
                 const estadosPermitidos = [
-                    "RETIRADO CON REPARACION",
-                    "NO VISTO",
-                    "LISTO",
-                    "GARANTIA",
-                    "LISTO AVISADO",
-                    "EN BANCO",
-                    "CONFIRMADO",
-                    "RECHAZADO",
-                    "PARA LA COMPRA",
-                    "CONSIGNACION",
-                    "VENDIDO"
+                    "RETIRADO CON REPARACION","NO VISTO","LISTO","GARANTIA",
+                    "LISTO AVISADO","EN BANCO","CONFIRMADO","RECHAZADO",
+                    "PARA LA COMPRA","CONSIGNACION","VENDIDO"
                 ];
-                const esRetirado = estadoUp === "RETIRADO CON REPARACION";
+                const esRetirado = estadoUp === ["RETIRADO CON REPARACION","NO VISTO","LISTO","GARANTIA",
+                    "LISTO AVISADO","EN BANCO","CONFIRMADO","RECHAZADO",
+                    "PARA LA COMPRA","CONSIGNACION","VENDIDO" ];
 
                 if (!estadosPermitidos.includes(estadoUp)) {
                     res.innerHTML = `
                         <div style="background:#c0392b;color:white;padding:25px;border-radius:10px;text-align:center;">
                             <h3 style="margin-top:0">⚠️ ${last.nombre}</h3>
-                            <p style="font-size:1.1em;font-weight:bold;letter-spacing:1px;">NO TE PUEDO DAR EL INFORME</p>
+                            <p style="font-size:1.1em;font-weight:bold;letter-spacing:1px;">NO TE PUEDO DAR EL INFORME.</p>
                             <p>SI ES NECESARIO COMUNICATE AL WHATSAPP</p>
                             <a href="https://wa.me/5493515300344" target="_blank"
                                style="display:inline-block;margin-top:12px;background:white;color:#c0392b;padding:10px 22px;border-radius:6px;font-weight:bold;text-decoration:none;">
@@ -407,24 +402,30 @@
                             </a>
                         </div>`;
                 } else {
-                    const extraInfo = esRetirado ? `
-                        <hr style="border-color:rgba(255,255,255,0.3);margin:12px 0">
-                        <p><strong>📋 Falla reportada:</strong><br>${last.falla || 'No especificada'}</p>
-                        <p><strong>🔍 Diagnóstico técnico:</strong><br>${last.diagnostico || 'No especificado'}</p>
-                        <p><strong>🔧 Reparación realizada:</strong><br>${last.reparacion || 'No especificada'}</p>
-                    ` : `
-                        <hr style="border-color:rgba(255,255,255,0.3);margin:12px 0">
-                        <p><strong>Diagnóstico:</strong> ${last.diagnostico || 'Pendiente'}</p>
-                    `;
-                    res.innerHTML = `
-                        <div style="background:var(--primary);color:white;padding:20px;border-radius:10px;">
-                            <h3 style="margin-top:0">👤 ${last.nombre}</h3>
-                            <p><strong>Estado:</strong> <span style="background:${esRetirado ? '#27ae60' : '#2980b9'};padding:3px 10px;border-radius:4px;">${last.estado}</span></p>
-                            <p>N° Orden: ${last.orden} | Equipo: ${last.modelo}</p>
-                            <p>Ingreso: ${formatDate(last.fechaIn)} | Salida: ${formatDate(last.fechaOut)}</p>
-                            <p>Garantía: ${calculateWarranty(last.fechaOut, last.garantiaDias)}</p>
-                            <p>Precio: $${last.precio || 'A confirmar'}</p>
-                            ${extraInfo}
+    // Definimos si debe mostrar la info detallada (falla, diagnóstico, reparación)
+    // Aquí puedes decidir si se muestra para TODOS los estados permitidos
+    // o solo para algunos específicos.
+    const mostrarDetalleCompleto = estadosPermitidos.includes(estadoUp);
+
+    const extraInfo = mostrarDetalleCompleto ? `
+        <hr style="border-color:rgba(255,255,255,0.3);margin:12px 0">
+        <p><strong>📋 Falla reportada:</strong><br>${last.falla || 'No especificada'}</p>
+        <p><strong>🔍 Diagnóstico técnico:</strong><br>${last.diagnostico || 'No especificado'}</p>
+        <p><strong>🔧 Trabajo realizado:</strong><br>${last.reparacion || 'No especificado'}</p>
+    ` : `
+        <hr style="border-color:rgba(255,255,255,0.3);margin:12px 0">
+        <p><strong>Diagnóstico:</strong> ${last.diagnostico || 'Pendiente'}</p>
+    `;
+
+    res.innerHTML = `
+        <div style="background:var(--primary);color:white;padding:20px;border-radius:10px;">
+            <h3 style="margin-top:0">👤 ${last.nombre}</h3>
+            <p><strong>Estado:</strong> <span style="background:#27ae60;padding:3px 10px;border-radius:4px;">${last.estado}</span></p>
+            <p>N° Orden: ${last.orden} | Equipo: ${last.modelo}</p>
+            <p>Ingreso: ${formatDate(last.fechaIn)} | Salida: ${formatDate(last.fechaOut)}</p>
+            <p>Garantía: ${calculateWarranty(last.fechaOut, last.garantiaDias)}</p>
+            <p>Precio: $${last.precio || 'A confirmar'}</p>
+            ${extraInfo}
                         </div>`;
                 }
             } else {
