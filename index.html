@@ -1,487 +1,1172 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Masters - Gestión Técnica Profesional</title>
-    <style>
-        :root { --primary: #1a252f; --accent: #2980b9; --warning: #f39c12; --danger: #e74c3c; --success: #27ae60; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #333; }
-        .container { max-width: 1350px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
-        .header { text-align: center; border-bottom: 4px solid var(--primary); margin-bottom: 20px; padding-bottom: 15px; }
-        .info-bar { font-size: 0.9em; background: #eee; padding: 8px; border-radius: 5px; margin-top: 10px; }
-        #logo-display { max-height: 130px; border-radius: 5px; margin-bottom: 10px; display:block; margin-left:auto; margin-right:auto; }
-        nav { display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
-        button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; color: white; transition: 0.3s; }
-        .btn-admin { background: var(--primary); }
-        .btn-client { background: var(--accent); }
-        .btn-save { background: var(--success); width: 100%; font-size: 1.1em; margin-top: 10px; }
-        .btn-search { background: #8e44ad; }
-        .btn-del { background: var(--danger); padding: 5px 8px; font-size: 0.8em; }
-        .section { display: none; }
-        .active { display: block; }
-        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; background: #f9f9f9; padding: 20px; border-radius: 10px; border: 1px solid #ddd; }
-        .full { grid-column: 1 / -1; }
-        input, select, textarea { padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 100%; box-sizing: border-box; }
-        .table-container { overflow-x: auto; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; background: white; font-size: 0.85em; }
-        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-        th { background: var(--primary); color: white; }
-        .status-no-visto { background-color: #fff3cd !important; font-weight: bold; }
-        .row-reentry { border-left: 8px solid var(--danger) !important; background-color: #fdf2f2; }
-        .blink { animation: blinker 1.5s linear infinite; color: var(--danger); font-weight: bold; }
-        @keyframes blinker { 50% { opacity: 0; } }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
-        .modal-content { background: white; margin: 5% auto; padding: 25px; width: 85%; border-radius: 10px; max-height: 85vh; overflow-y: auto; position: relative; }
-        .close { position: absolute; right: 20px; top: 10px; font-size: 28px; cursor: pointer; color: var(--danger); font-weight: bold; }
-        #loading-overlay { display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); color:white; font-size:1.5em; align-items:center; justify-content:center; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Masters – Gestión Técnica Profesional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Ubuntu:wght@300;400;500;700&family=Fira+Code:wght@400;500;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        mono: ['JetBrains Mono', 'monospace'],
+        body: ['Inter', 'sans-serif'],
+        orbitron: ['Orbitron', 'sans-serif'],
+        ubuntu: ['Ubuntu', 'sans-serif'],
+        fira: ['Fira Code', 'monospace'],
+        rajdhani: ['Rajdhani', 'sans-serif'],
+      }
+    }
+  }
+};
+</script>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES – 30 THEMES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── macOS Themes (1–10) ── */
+[data-theme="macos-light"] {
+  --bg: #f5f5f7; --bg2: #ffffff; --bg3: #e8e8ed;
+  --text: #1d1d1f; --text2: #6e6e73; --text3: #86868b;
+  --accent: #0071e3; --accent2: #34c759; --accent3: #ff375f;
+  --border: #d2d2d7; --shadow: rgba(0,0,0,0.12);
+  --radius: 12px; --radius-sm: 8px; --radius-lg: 18px;
+  --font: 'Inter', sans-serif; --font-display: 'Inter', sans-serif;
+  --btn-style: normal; --glass: rgba(255,255,255,0.72);
+}
+[data-theme="macos-dark"] {
+  --bg: #1c1c1e; --bg2: #2c2c2e; --bg3: #3a3a3c;
+  --text: #f5f5f7; --text2: #aeaeb2; --text3: #636366;
+  --accent: #0a84ff; --accent2: #30d158; --accent3: #ff453a;
+  --border: #38383a; --shadow: rgba(0,0,0,0.4);
+  --radius: 12px; --radius-sm: 8px; --radius-lg: 18px;
+  --font: 'Inter', sans-serif; --font-display: 'Inter', sans-serif;
+  --glass: rgba(44,44,46,0.8);
+}
+[data-theme="macos-ventura"] {
+  --bg: #f2f2f7; --bg2: #ffffff; --bg3: #e5e5ea;
+  --text: #000000; --text2: #3c3c43; --text3: #8e8e93;
+  --accent: #007aff; --accent2: #ff9f0a; --accent3: #ff2d55;
+  --border: #c6c6c8; --shadow: rgba(0,0,0,0.1);
+  --radius: 10px; --radius-sm: 6px; --radius-lg: 16px;
+  --font: 'Inter', sans-serif; --font-display: 'Inter', sans-serif;
+  --glass: rgba(242,242,247,0.85);
+}
+[data-theme="macos-bigsur"] {
+  --bg: #e8eaed; --bg2: #ffffff; --bg3: #d2d5db;
+  --text: #202124; --text2: #5f6368; --text3: #9aa0a6;
+  --accent: #1a73e8; --accent2: #34a853; --accent3: #ea4335;
+  --border: #bdc1c6; --shadow: rgba(0,0,0,0.15);
+  --radius: 14px; --radius-sm: 10px; --radius-lg: 22px;
+  --font: 'Inter', sans-serif; --font-display: 'Inter', sans-serif;
+  --glass: rgba(232,234,237,0.9);
+}
+[data-theme="macos-monterey"] {
+  --bg: #1a1a2e; --bg2: #16213e; --bg3: #0f3460;
+  --text: #e0e0e0; --text2: #a0a0b0; --text3: #6060a0;
+  --accent: #e94560; --accent2: #533483; --accent3: #0f3460;
+  --border: #1a3a6a; --shadow: rgba(0,0,0,0.5);
+  --radius: 12px; --radius-sm: 8px; --radius-lg: 18px;
+  --font: 'Inter', sans-serif; --font-display: 'Orbitron', sans-serif;
+  --glass: rgba(26,26,46,0.85);
+}
+[data-theme="macos-pro"] {
+  --bg: #000000; --bg2: #1a1a1a; --bg3: #2a2a2a;
+  --text: #ffffff; --text2: #cccccc; --text3: #888888;
+  --accent: #ff6b00; --accent2: #ffd700; --accent3: #ff0000;
+  --border: #333333; --shadow: rgba(255,107,0,0.2);
+  --radius: 4px; --radius-sm: 2px; --radius-lg: 8px;
+  --font: 'Inter', sans-serif; --font-display: 'Orbitron', sans-serif;
+  --glass: rgba(0,0,0,0.9);
+}
+[data-theme="macos-catalina"] {
+  --bg: #f0f4ff; --bg2: #ffffff; --bg3: #e0e8ff;
+  --text: #1a1a3e; --text2: #4a4a7e; --text3: #8a8aae;
+  --accent: #5e5ce6; --accent2: #bf5af2; --accent3: #ff6961;
+  --border: #c8d0f0; --shadow: rgba(94,92,230,0.15);
+  --radius: 16px; --radius-sm: 10px; --radius-lg: 24px;
+  --font: 'Inter', sans-serif; --font-display: 'Rajdhani', sans-serif;
+  --glass: rgba(240,244,255,0.85);
+}
+[data-theme="macos-mojave"] {
+  --bg: #2b1a0e; --bg2: #3d2515; --bg3: #4f3020;
+  --text: #f5deb3; --text2: #c8a882; --text3: #8b6c4a;
+  --accent: #d4780f; --accent2: #e8a020; --accent3: #c04c00;
+  --border: #5a3820; --shadow: rgba(0,0,0,0.5);
+  --radius: 8px; --radius-sm: 4px; --radius-lg: 14px;
+  --font: 'Inter', sans-serif; --font-display: 'Orbitron', sans-serif;
+  --glass: rgba(43,26,14,0.85);
+}
+[data-theme="macos-highsierra"] {
+  --bg: #ecf0f1; --bg2: #ffffff; --bg3: #dfe6e9;
+  --text: #2d3436; --text2: #636e72; --text3: #b2bec3;
+  --accent: #2980b9; --accent2: #27ae60; --accent3: #e74c3c;
+  --border: #cfd9df; --shadow: rgba(0,0,0,0.1);
+  --radius: 6px; --radius-sm: 4px; --radius-lg: 10px;
+  --font: 'Inter', sans-serif; --font-display: 'Rajdhani', sans-serif;
+  --glass: rgba(236,240,241,0.9);
+}
+[data-theme="macos-glass"] {
+  --bg: linear-gradient(135deg,#667eea 0%,#764ba2 100%); --bg2: rgba(255,255,255,0.15); --bg3: rgba(255,255,255,0.08);
+  --text: #ffffff; --text2: rgba(255,255,255,0.8); --text3: rgba(255,255,255,0.5);
+  --accent: #ffffff; --accent2: #ffd700; --accent3: #ff6b9d;
+  --border: rgba(255,255,255,0.25); --shadow: rgba(0,0,0,0.3);
+  --radius: 16px; --radius-sm: 10px; --radius-lg: 24px;
+  --font: 'Inter', sans-serif; --font-display: 'Rajdhani', sans-serif;
+  --glass: rgba(255,255,255,0.12);
+}
+
+/* ── Windows Themes (11–20) ── */
+[data-theme="win11-light"] {
+  --bg: #f3f3f3; --bg2: #ffffff; --bg3: #e5e5e5;
+  --text: #202020; --text2: #616161; --text3: #9e9e9e;
+  --accent: #0067c0; --accent2: #0099bc; --accent3: #ca5010;
+  --border: #d6d6d6; --shadow: rgba(0,0,0,0.08);
+  --radius: 8px; --radius-sm: 4px; --radius-lg: 12px;
+  --font: 'Inter', sans-serif; --font-display: 'Rajdhani', sans-serif;
+  --glass: rgba(243,243,243,0.85);
+}
+[data-theme="win11-dark"] {
+  --bg: #202020; --bg2: #2d2d2d; --bg3: #383838;
+  --text: #ffffff; --text2: #d0d0d0; --text3: #909090;
+  --accent: #60cdff; --accent2: #67c0a0; --accent3: #fc8d62;
+  --border: #404040; --shadow: rgba(0,0,0,0.4);
+  --radius: 8px; --radius-sm: 4px; --radius-lg: 12px;
+  --font: 'Inter', sans-serif; --font-display: 'Rajdhani', sans-serif;
+  --glass: rgba(45,45,45,0.85);
+}
+[data-theme="win11-acrylic"] {
+  --bg: rgba(30,30,30,0.7); --bg2: rgba(50,50,60,0.6); --bg3: rgba(70,70,80,0.5);
+  --text: #ffffff; --text2: #c0c0c8; --text3: #808090;
+  --accent: #60cdff; --accent2: #a0e080; --accent3: #f080c0;
+  --border: rgba(255,255,255,0.12); --shadow: rgba(0,0,0,0.4);
+  --radius: 8px; --radius-sm: 4px; --radius-lg: 12px;
+  --font: 'Inter', sans-serif; --font-display: 'Rajdhani', sans-serif;
+  --glass: rgba(30,30,30,0.6);
+}
+[data-theme="win11-mica"] {
+  --bg: #1e1e2e; --bg2: #2a2a3e; --bg3: #363650;
+  --text: #cdd6f4; --text2: #a6adc8; --text3: #585b70;
+  --accent: #89b4fa; --accent2: #a6e3a1; --accent3: #f38ba8;
+  --border: #45475a; --shadow: rgba(0,0,0,0.4);
+  --radius: 8px; --radius-sm: 4px; --radius-lg: 12px;
+  --font: 'Inter', sans-serif; --font-display: 'Rajdhani', sans-serif;
+  --glass: rgba(30,30,46,0.85);
+}
+[data-theme="win10-classic"] {
+  --bg: #0078d4; --bg2: #f0f0f0; --bg3: #e0e0e0;
+  --text: #000000; --text2: #323232; --text3: #737373;
+  --accent: #005a9e; --accent2: #107c10; --accent3: #da3b01;
+  --border: #c0c0c0; --shadow: rgba(0,0,0,0.2);
+  --radius: 4px; --radius-sm: 2px; --radius-lg: 6px;
+  --font: 'Inter', sans-serif; --font-display: 'Rajdhani', sans-serif;
+  --glass: rgba(240,240,240,0.9);
+}
+[data-theme="win-highcontrast"] {
+  --bg: #000000; --bg2: #000000; --bg3: #1a1a1a;
+  --text: #ffffff; --text2: #ffff00; --text3: #00ffff;
+  --accent: #1aebff; --accent2: #37f536; --accent3: #ff4900;
+  --border: #ffffff; --shadow: rgba(255,255,255,0.2);
+  --radius: 0px; --radius-sm: 0px; --radius-lg: 0px;
+  --font: 'Inter', sans-serif; --font-display: 'Inter', sans-serif;
+  --glass: rgba(0,0,0,0.95);
+}
+[data-theme="win-fluent"] {
+  --bg: #f5f5f5; --bg2: #fafafa; --bg3: #ebebeb;
+  --text: #161616; --text2: #525252; --text3: #8f8f8f;
+  --accent: #0f62fe; --accent2: #42be65; --accent3: #ff832b;
+  --border: #e0e0e0; --shadow: rgba(0,0,0,0.08);
+  --radius: 4px; --radius-sm: 2px; --radius-lg: 8px;
+  --font: 'Inter', sans-serif; --font-display: 'Rajdhani', sans-serif;
+  --glass: rgba(245,245,245,0.9);
+}
+[data-theme="win-gaming"] {
+  --bg: #0a0a0a; --bg2: #111111; --bg3: #1a1a1a;
+  --text: #00ff41; --text2: #00cc33; --text3: #008822;
+  --accent: #00ff41; --accent2: #ff0080; --accent3: #0080ff;
+  --border: #00ff4133; --shadow: rgba(0,255,65,0.2);
+  --radius: 2px; --radius-sm: 1px; --radius-lg: 4px;
+  --font: 'JetBrains Mono', monospace; --font-display: 'Orbitron', sans-serif;
+  --glass: rgba(0,20,5,0.9);
+}
+[data-theme="win-sunset"] {
+  --bg: #1a0a00; --bg2: #2a1500; --bg3: #3a2000;
+  --text: #ffe5c0; --text2: #ffb080; --text3: #cc7040;
+  --accent: #ff6b00; --accent2: #ff9f1c; --accent3: #ff2d55;
+  --border: #5a3010; --shadow: rgba(255,107,0,0.3);
+  --radius: 6px; --radius-sm: 3px; --radius-lg: 10px;
+  --font: 'Inter', sans-serif; --font-display: 'Orbitron', sans-serif;
+  --glass: rgba(26,10,0,0.9);
+}
+[data-theme="win-pastel"] {
+  --bg: #fef6fb; --bg2: #ffffff; --bg3: #fde8f4;
+  --text: #3d1c56; --text2: #7b4f9e; --text3: #b08ec8;
+  --accent: #c77dff; --accent2: #48cae4; --accent3: #ff6b9d;
+  --border: #e8caf4; --shadow: rgba(199,125,255,0.15);
+  --radius: 20px; --radius-sm: 12px; --radius-lg: 30px;
+  --font: 'Inter', sans-serif; --font-display: 'Rajdhani', sans-serif;
+  --glass: rgba(254,246,251,0.9);
+}
+
+/* ── Linux/Retro/Custom Themes (21–30) ── */
+[data-theme="ubuntu"] {
+  --bg: #300a24; --bg2: #3e1230; --bg3: #4e1a3c;
+  --text: #ffffff; --text2: #e8c0d8; --text3: #b08098;
+  --accent: #e95420; --accent2: #77216f; --accent3: #5e2750;
+  --border: #5e2050; --shadow: rgba(233,84,32,0.3);
+  --radius: 6px; --radius-sm: 4px; --radius-lg: 10px;
+  --font: 'Ubuntu', sans-serif; --font-display: 'Ubuntu', sans-serif;
+  --glass: rgba(48,10,36,0.9);
+}
+[data-theme="dracula"] {
+  --bg: #282a36; --bg2: #1e1f29; --bg3: #343746;
+  --text: #f8f8f2; --text2: #cccccc; --text3: #6272a4;
+  --accent: #bd93f9; --accent2: #50fa7b; --accent3: #ff5555;
+  --border: #44475a; --shadow: rgba(0,0,0,0.5);
+  --radius: 8px; --radius-sm: 4px; --radius-lg: 12px;
+  --font: 'Fira Code', monospace; --font-display: 'Fira Code', monospace;
+  --glass: rgba(40,42,54,0.9);
+}
+[data-theme="nord"] {
+  --bg: #2e3440; --bg2: #3b4252; --bg3: #434c5e;
+  --text: #eceff4; --text2: #d8dee9; --text3: #4c566a;
+  --accent: #88c0d0; --accent2: #a3be8c; --accent3: #bf616a;
+  --border: #4c566a; --shadow: rgba(0,0,0,0.4);
+  --radius: 6px; --radius-sm: 3px; --radius-lg: 10px;
+  --font: 'JetBrains Mono', monospace; --font-display: 'Orbitron', sans-serif;
+  --glass: rgba(46,52,64,0.9);
+}
+[data-theme="cyberpunk"] {
+  --bg: #0d0221; --bg2: #1a0533; --bg3: #270844;
+  --text: #f0f; --text2: #0ff; --text3: #ff0;
+  --accent: #ff00ff; --accent2: #00ffff; --accent3: #ffff00;
+  --border: #ff00ff44; --shadow: rgba(255,0,255,0.4);
+  --radius: 2px; --radius-sm: 0px; --radius-lg: 4px;
+  --font: 'Orbitron', sans-serif; --font-display: 'Orbitron', sans-serif;
+  --glass: rgba(13,2,33,0.9);
+}
+[data-theme="solarized"] {
+  --bg: #002b36; --bg2: #073642; --bg3: #094050;
+  --text: #839496; --text2: #657b83; --text3: #586e75;
+  --accent: #268bd2; --accent2: #2aa198; --accent3: #cb4b16;
+  --border: #073642; --shadow: rgba(0,0,0,0.4);
+  --radius: 4px; --radius-sm: 2px; --radius-lg: 8px;
+  --font: 'Fira Code', monospace; --font-display: 'Fira Code', monospace;
+  --glass: rgba(0,43,54,0.9);
+}
+[data-theme="gruvbox"] {
+  --bg: #282828; --bg2: #3c3836; --bg3: #504945;
+  --text: #ebdbb2; --text2: #d5c4a1; --text3: #a89984;
+  --accent: #fabd2f; --accent2: #b8bb26; --accent3: #fb4934;
+  --border: #665c54; --shadow: rgba(0,0,0,0.5);
+  --radius: 4px; --radius-sm: 2px; --radius-lg: 6px;
+  --font: 'Fira Code', monospace; --font-display: 'Orbitron', sans-serif;
+  --glass: rgba(40,40,40,0.9);
+}
+[data-theme="retro-terminal"] {
+  --bg: #0a0e0a; --bg2: #0d120d; --bg3: #111811;
+  --text: #33ff33; --text2: #22cc22; --text3: #116611;
+  --accent: #33ff33; --accent2: #ffff00; --accent3: #ff3333;
+  --border: #33ff3333; --shadow: rgba(51,255,51,0.15);
+  --radius: 0px; --radius-sm: 0px; --radius-lg: 0px;
+  --font: 'JetBrains Mono', monospace; --font-display: 'JetBrains Mono', monospace;
+  --glass: rgba(10,14,10,0.95);
+}
+[data-theme="arch-linux"] {
+  --bg: #0a0c14; --bg2: #111420; --bg3: #181c2c;
+  --text: #cdd6f4; --text2: #7f849c; --text3: #45475a;
+  --accent: #1793d1; --accent2: #89dceb; --accent3: #f38ba8;
+  --border: #313244; --shadow: rgba(0,0,0,0.5);
+  --radius: 4px; --radius-sm: 2px; --radius-lg: 8px;
+  --font: 'JetBrains Mono', monospace; --font-display: 'Orbitron', sans-serif;
+  --glass: rgba(10,12,20,0.95);
+}
+[data-theme="monokai"] {
+  --bg: #272822; --bg2: #1e1f1c; --bg3: #2d2e28;
+  --text: #f8f8f2; --text2: #cfcfc2; --text3: #75715e;
+  --accent: #a6e22e; --accent2: #fd971f; --accent3: #f92672;
+  --border: #3e3d32; --shadow: rgba(0,0,0,0.5);
+  --radius: 6px; --radius-sm: 3px; --radius-lg: 10px;
+  --font: 'Fira Code', monospace; --font-display: 'Fira Code', monospace;
+  --glass: rgba(39,40,34,0.9);
+}
+[data-theme="vaporwave"] {
+  --bg: #1a0030; --bg2: #2d0060; --bg3: #400080;
+  --text: #ff71ce; --text2: #05ffa1; --text3: #b967ff;
+  --accent: #ff71ce; --accent2: #05ffa1; --accent3: #fffb96;
+  --border: #b967ff44; --shadow: rgba(255,113,206,0.4);
+  --radius: 0px; --radius-sm: 0px; --radius-lg: 2px;
+  --font: 'Orbitron', sans-serif; --font-display: 'Orbitron', sans-serif;
+  --glass: rgba(26,0,48,0.9);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GLOBAL STYLES
+   ═══════════════════════════════════════════════════════════════ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font, 'Inter', sans-serif);
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.4s ease, color 0.4s ease;
+  min-height: 100vh;
+}
+
+:root {
+  --bg: #1c1c1e; --bg2: #2c2c2e; --bg3: #3a3a3c;
+  --text: #f5f5f7; --text2: #aeaeb2; --text3: #636366;
+  --accent: #0a84ff; --accent2: #30d158; --accent3: #ff453a;
+  --border: #38383a; --shadow: rgba(0,0,0,0.4);
+  --radius: 12px; --radius-sm: 8px; --radius-lg: 18px;
+  --font: 'Inter', sans-serif; --font-display: 'Inter', sans-serif;
+  --glass: rgba(44,44,46,0.8);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Matrix Canvas ── */
+#matrix-canvas { position: fixed; inset: 0; z-index: 9999; background: #000; }
+#matrix-intro { position: fixed; inset: 0; z-index: 9998; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; }
+#matrix-intro.fade-out { animation: fadeOut 0.8s forwards; }
+@keyframes fadeOut { to { opacity: 0; pointer-events: none; } }
+#matrix-logo-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.5rem, 5vw, 3rem);
+  font-weight: 900;
+  color: #00ff41;
+  text-shadow: 0 0 20px #00ff41, 0 0 40px #00ff41;
+  letter-spacing: 0.3em;
+  animation: glitch 2s infinite;
+  z-index: 10000;
+  position: relative;
+}
+@keyframes glitch {
+  0%,100% { text-shadow: 0 0 20px #00ff41, 0 0 40px #00ff41; }
+  20% { text-shadow: -2px 0 #ff00ff, 2px 0 #00ffff, 0 0 20px #00ff41; }
+  40% { text-shadow: 2px 0 #ff00ff, -2px 0 #00ffff, 0 0 20px #00ff41; }
+}
+
+/* ── Shared card style ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px var(--shadow);
+  transition: all 0.3s ease;
+  font-family: var(--font);
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 20px; border: none; cursor: pointer; font-weight: 600;
+  border-radius: var(--radius-sm); font-family: var(--font);
+  transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+  font-size: 0.875rem;
+}
+.btn:hover { transform: translateY(-2px) scale(1.02); filter: brightness(1.1); }
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 12px var(--shadow); }
+.btn-success { background: var(--accent2); color: white; box-shadow: 0 4px 12px var(--shadow); }
+.btn-danger { background: var(--accent3); color: white; box-shadow: 0 4px 12px var(--shadow); }
+.btn-ghost { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+.btn-full { width: 100%; padding: 12px; font-size: 1rem; }
+
+/* ── Inputs ── */
+.input {
+  width: 100%; padding: 10px 14px; background: var(--bg3); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-family: var(--font); font-size: 0.875rem; outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+textarea.input { resize: vertical; min-height: 80px; }
+
+/* ── Icon shadow effect ── */
+.icon-shadow {
+  filter: drop-shadow(2px 2px 4px var(--shadow));
+  transition: transform 0.2s, filter 0.2s;
+}
+.icon-shadow:hover { transform: scale(1.15); filter: drop-shadow(3px 3px 8px var(--shadow)) brightness(1.2); }
+
+/* ── Table ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; font-family: var(--font); }
+.data-table th { background: var(--accent); color: white; padding: 10px 12px; text-align: left; font-weight: 600; }
+.data-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+.data-table tr:hover td { background: var(--bg3); }
+.row-novisto td { background: color-mix(in srgb, #f39c12 15%, transparent) !important; font-weight: 600; }
+.row-reentry { border-left: 4px solid var(--accent3) !important; }
+.blink { animation: blinker 1.2s ease-in-out infinite; color: var(--accent3); font-weight: 700; }
+@keyframes blinker { 50% { opacity: 0; } }
+
+/* ── Status badges ── */
+.badge { display: inline-flex; padding: 2px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; }
+.badge-green { background: color-mix(in srgb, var(--accent2) 20%, transparent); color: var(--accent2); }
+.badge-blue { background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent); }
+.badge-orange { background: rgba(243,156,18,0.2); color: #f39c12; }
+.badge-red { background: color-mix(in srgb, var(--accent3) 20%, transparent); color: var(--accent3); }
+
+/* ── WhatsApp float ── */
+#wa-float {
+  position: fixed; bottom: 24px; right: 24px; z-index: 999;
+  width: 58px; height: 58px; border-radius: 50%;
+  background: #25d366; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(37,211,102,0.5);
+  cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
+}
+#wa-float:hover { transform: scale(1.15); box-shadow: 0 6px 28px rgba(37,211,102,0.7); }
+
+/* ── Theme panel ── */
+#theme-panel {
+  position: fixed; top: 0; right: -340px; width: 320px; height: 100vh;
+  background: var(--bg2); border-left: 1px solid var(--border);
+  box-shadow: -8px 0 30px var(--shadow); z-index: 1000;
+  transition: right 0.35s cubic-bezier(0.4,0,0.2,1); overflow-y: auto; padding: 20px;
+}
+#theme-panel.open { right: 0; }
+.theme-chip {
+  padding: 8px 12px; border-radius: var(--radius-sm); cursor: pointer;
+  font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border);
+  transition: transform 0.15s, box-shadow 0.15s; white-space: nowrap;
+  font-family: var(--font);
+}
+.theme-chip:hover { transform: scale(1.05); box-shadow: 0 4px 12px var(--shadow); }
+.theme-chip.active { border: 2px solid var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+
+/* ── Modal ── */
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 800; backdrop-filter: blur(4px); }
+.modal.open { display: flex; align-items: center; justify-content: center; }
+.modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; width: 90%; max-width: 700px; max-height: 85vh; overflow-y: auto; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.5); font-family: var(--font); }
+
+/* ── Share menu ── */
+#share-menu { position: absolute; bottom: 70px; right: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; display: none; box-shadow: 0 8px 24px var(--shadow); min-width: 200px; }
+#share-menu.open { display: block; }
+
+/* ── Loading overlay ── */
+#loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+#loading-overlay.show { display: flex; }
+.spinner { width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Grid form ── */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.form-grid .full { grid-column: 1 / -1; }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+  #theme-panel { width: 100%; right: -100%; }
+}
+</style>
 </head>
-<body>
+<body data-theme="macos-dark">
 
-<div id="loading-overlay">⏳ Cargando...</div>
-
-<div class="container">
-    <div class="header">
-        <img id="logo-display" src="" alt="Logo" style="display:none">
-        <div class="info-bar">
-            <strong>DATA MASTERS</strong> | WhatsApp: 351-5300344 | Lun a Vie 10:00 a 18:00
-        </div>
-    </div>
-
-    <nav>
-        <button class="btn-client" onclick="showSection('cliente-view')">CONSULTA CLIENTE</button>
-        <button class="btn-admin" onclick="checkAdmin()">PANEL ADMINISTRADOR</button>
-    </nav>
-
-    <div id="cliente-view" class="section active">
-        <div style="max-width: 500px; margin: auto; padding: 25px; border: 2px solid var(--accent); border-radius: 10px; background: #fff;">
-            <h3 style="text-align:center; color: var(--accent);">Seguimiento Online</h3>
-            <input type="text" id="dni-consulta" placeholder="Ingrese su TEL O DNI">
-            <button class="btn-client" onclick="consultaCliente()" style="width:100%; margin-top:15px">VER ESTADO DE MI EQUIPO</button>
-            <div id="res-consulta" style="margin-top:20px"></div>
-        </div>
-    </div>
-
-    <div id="admin-view" class="section">
-        <div style="display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 12px; border-radius: 8px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <strong>LOGO:</strong> <input type="file" id="logo-input" accept="image/*" onchange="loadLogo(event)" style="font-size: 0.8em;">
-            </div>
-            <div>
-                <button onclick="downloadBackup()" style="background: #6c757d; font-size: 0.85em;">💾 GUARDAR RESPALDO</button>
-                <button onclick="document.getElementById('file-backup').click()" style="background: #6c757d; font-size: 0.85em;">📂 CARGAR BASE</button>
-                <input type="file" id="file-backup" style="display:none" onchange="loadBackup(event)">
-            </div>
-        </div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h3 id="form-title" style="margin:0;">Nueva Orden de Trabajo</h3>
-            <button class="btn-search" onclick="openSearchClientModal()">🔍 BUSCAR CLIENTE EXISTENTE</button>
-        </div>
-
-        <form id="order-form" class="grid-form">
-            <input type="hidden" id="edit-id">
-            <input type="text" id="orden-num" placeholder="N° Seguimiento" readonly style="background:#ddd">
-            <input type="text" id="nombre" placeholder="Nombre y Apellido Cliente" required>
-            <input type="text" id="dni" placeholder="DNI" required>
-            <input type="text" id="tel" placeholder="Teléfono" required>
-            <input type="text" id="modelo" placeholder="Modelo del Equipo / Elemento" required>
-            <input type="text" id="serie" placeholder="N° de Serie" required>
-            <input type="text" id="accesorios" placeholder="Accesorios que deja">
-            <div><label><small>Fecha Ingreso:</small></label><input type="date" id="fecha-in"></div>
-            <div><label><small>Fecha Salida:</small></label><input type="date" id="fecha-out"></div>
-            <select id="estado">
-                <option value="No Visto">No Visto</option>
-                <option value="LISTO">LISTO</option>
-                <option value="LISTO AVISADO">LISTO AVISADO</option>
-                <option value="EN BANCO">EN BANCO</option>
-                <option value="CONFIRMADO">CONFIRMADO</option>
-                <option value="RECHAZADO">RECHAZADO</option>
-                <option value="PARA LA COMPRA">PARA LA COMPRA</option>
-                <option value="CONSIGNACION">CONSIGNACION</option>
-                <option value="VENDIDO">VENDIDO</option>
-                <option value="RETIRADO SIN REPARACION">RETIRADO SIN REPARACION</option>
-                <option value="RETIRADO CON REPARACION">RETIRADO CON REPARACION</option>
-                <option value="GARANTIA">GARANTIA</option>
-                <option value="ABANDONADO">ABANDONADO</option>
-            </select>
-            <input type="number" id="garantia-inicial" placeholder="Días de Garantía (Total)">
-            <input type="number" id="precio" placeholder="Precio Final $">
-            <textarea id="falla" class="full" placeholder="Falla reportada..."></textarea>
-            <textarea id="diagnostico" class="full" placeholder="Diagnóstico técnico..."></textarea>
-            <textarea id="reparacion" class="full" placeholder="Detalle de reparación..."></textarea>
-            <div class="full" style="display:flex; gap:10px">
-                <button type="button" onclick="saveOrder()" class="btn-save">GUARDAR / ACTUALIZAR ORDEN</button>
-                <button type="button" onclick="resetForm()" style="background:#95a5a6; margin-top:10px">LIMPIAR</button>
-            </div>
-        </form>
-
-        <hr style="margin:40px 0">
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <input type="text" id="admin-search" placeholder="Buscar historial por DNI, Nombre, Teléfono o Serie...">
-            <button class="btn-admin" onclick="renderAdminList()">BUSCAR</button>
-        </div>
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Orden</th><th>Ingreso</th><th>Salida</th><th>Cliente</th>
-                        <th>Teléfono</th><th>Serie</th><th>Estado</th><th>Garantía</th><th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-table-body"></tbody>
-            </table>
-        </div>
-    </div>
+<!-- MATRIX INTRO -->
+<canvas id="matrix-canvas"></canvas>
+<div id="matrix-intro">
+  <div id="matrix-logo-text">DATA MASTERS</div>
+  <div style="font-family:'JetBrains Mono',monospace; color:#00cc33; font-size:0.9rem; margin-top:12px; opacity:0.7; letter-spacing:0.2em;">INICIANDO SISTEMA...</div>
 </div>
 
-<div id="modalSearchClient" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeSearchModal()">&times;</span>
-        <h3>Buscar Cliente en Base de Datos</h3>
-        <input type="text" id="input-search-client" placeholder="DNI, Nombre o Teléfono..." onkeyup="filterClients()">
-        <div class="table-container">
-            <table>
-                <thead><tr><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>Acción</th></tr></thead>
-                <tbody id="search-client-body"></tbody>
-            </table>
-        </div>
-    </div>
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay">
+  <div style="text-align:center;">
+    <div class="spinner" style="margin:auto;"></div>
+    <div style="margin-top:12px; font-family:var(--font); color:white; font-size:0.9rem;">Procesando...</div>
+  </div>
 </div>
 
+<!-- WHATSAPP FLOAT -->
+<div id="wa-float" onclick="window.open('https://wa.me/5493515300344','_blank')" title="WhatsApp">
+  <svg width="30" height="30" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+</div>
+
+<!-- THEME PANEL -->
+<div id="theme-panel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <h3 style="font-family:var(--font-display);color:var(--text);font-size:1.1rem;">🎨 Apariencia</h3>
+    <button onclick="closeThemePanel()" class="btn btn-ghost" style="padding:6px 10px;">✕</button>
+  </div>
+  <div id="theme-sections"></div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="app" style="opacity:0; transition: opacity 0.5s ease;">
+
+  <!-- HEADER -->
+  <header style="background:var(--bg2); border-bottom:1px solid var(--border); padding:14px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; backdrop-filter:blur(10px);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <img id="logo-display" src="" alt="" style="height:40px;display:none;border-radius:8px;" class="icon-shadow">
+      <div>
+        <div style="font-family:var(--font-display);font-weight:900;font-size:1.3rem;color:var(--accent);letter-spacing:0.05em;">DATA MASTERS</div>
+        <div style="font-size:0.72rem;color:var(--text3);">Gestión Técnica Profesional</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-ghost" style="font-size:0.78rem;" onclick="showSection('client')">
+        <span class="icon-shadow">📱</span> Mi Equipo
+      </button>
+      <button class="btn btn-primary" style="font-size:0.78rem;" onclick="checkAdmin()">
+        <span class="icon-shadow">🔐</span> Admin
+      </button>
+      <button class="btn btn-ghost" style="padding:8px 10px;" onclick="openThemePanel()" title="Apariencia">
+        <span class="icon-shadow" style="font-size:1.1rem;">⚙️</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- CLIENT VIEW -->
+  <div id="section-client" class="section" style="min-height:80vh; display:flex; align-items:center; justify-content:center; padding:24px;">
+    <div class="card" style="max-width:480px;width:100%;padding:36px;">
+      <div style="text-align:center;margin-bottom:28px;">
+        <div class="icon-shadow" style="font-size:3rem;display:inline-block;margin-bottom:12px;">🔍</div>
+        <h2 style="font-family:var(--font-display);color:var(--accent);font-size:1.5rem;margin-bottom:6px;">Seguimiento Online</h2>
+        <p style="color:var(--text2);font-size:0.85rem;">Ingresá tu DNI o Teléfono para ver el estado de tu equipo</p>
+      </div>
+      <input class="input" id="dni-consulta" placeholder="DNI o Teléfono" style="margin-bottom:12px;">
+      <button class="btn btn-primary btn-full" onclick="consultaCliente()">
+        <span class="icon-shadow">🔎</span> VER ESTADO DE MI EQUIPO
+      </button>
+      <div id="res-consulta" style="margin-top:20px;"></div>
+      
+      <!-- Share section -->
+      <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border);">
+        <p style="font-size:0.78rem;color:var(--text3);text-align:center;margin-bottom:12px;">COMPARTIR</p>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn" style="background:#25d366;color:white;font-size:0.75rem;" onclick="shareWA()">
+            <span class="icon-shadow">💬</span> WhatsApp
+          </button>
+          <button class="btn" style="background:#0088cc;color:white;font-size:0.75rem;" onclick="shareTG()">
+            <span class="icon-shadow">✈️</span> Telegram
+          </button>
+          <button class="btn" style="background:#1da1f2;color:white;font-size:0.75rem;" onclick="shareTW()">
+            <span class="icon-shadow">🐦</span> Twitter
+          </button>
+          <button class="btn btn-ghost" style="font-size:0.75rem;" onclick="copyLink()">
+            <span class="icon-shadow">🔗</span> Copiar Link
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN VIEW -->
+  <div id="section-admin" class="section" style="display:none; padding:20px; max-width:1300px; margin:auto;">
+    
+    <div class="card" style="padding:16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label style="font-size:0.8rem;color:var(--text2);font-weight:600;">LOGO:</label>
+        <input type="file" id="logo-input" accept="image/*" onchange="loadLogo(event)" style="font-size:0.75rem;color:var(--text);">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" style="font-size:0.78rem;" onclick="downloadBackup()">💾 Respaldo</button>
+        <button class="btn btn-ghost" style="font-size:0.78rem;" onclick="document.getElementById('file-backup').click()">📂 Cargar Base</button>
+        <input type="file" id="file-backup" style="display:none" onchange="loadBackup(event)">
+        <button class="btn btn-ghost" style="padding:8px 10px;" onclick="openThemePanel()">⚙️ Apariencia</button>
+      </div>
+    </div>
+
+    <div class="card" style="padding:24px;margin-bottom:24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <h3 id="form-title" style="font-family:var(--font-display);color:var(--accent);font-size:1.1rem;">Nueva Orden de Trabajo</h3>
+        <button class="btn btn-ghost" style="font-size:0.8rem;" onclick="openSearchClientModal()">🔍 Buscar Cliente</button>
+      </div>
+      <div class="form-grid">
+        <input type="hidden" id="edit-id">
+        <input class="input" id="orden-num" placeholder="N° Seguimiento" readonly style="background:var(--bg3);opacity:0.7;">
+        <input class="input" id="nombre" placeholder="Nombre y Apellido" required>
+        <input class="input" id="dni" placeholder="DNI" required>
+        <input class="input" id="tel" placeholder="Teléfono" required>
+        <input class="input" id="modelo" placeholder="Modelo del Equipo" required>
+        <input class="input" id="serie" placeholder="N° de Serie" required>
+        <input class="input" id="accesorios" placeholder="Accesorios que deja">
+        <div>
+          <label style="font-size:0.72rem;color:var(--text2);display:block;margin-bottom:4px;">Fecha Ingreso</label>
+          <input class="input" type="date" id="fecha-in">
+        </div>
+        <div>
+          <label style="font-size:0.72rem;color:var(--text2);display:block;margin-bottom:4px;">Fecha Salida</label>
+          <input class="input" type="date" id="fecha-out">
+        </div>
+        <select class="input" id="estado">
+          <option value="No Visto">No Visto</option>
+          <option value="LISTO">LISTO</option>
+          <option value="LISTO AVISADO">LISTO AVISADO</option>
+          <option value="EN BANCO">EN BANCO</option>
+          <option value="CONFIRMADO">CONFIRMADO</option>
+          <option value="RECHAZADO">RECHAZADO</option>
+          <option value="PARA LA COMPRA">PARA LA COMPRA</option>
+          <option value="CONSIGNACION">CONSIGNACION</option>
+          <option value="VENDIDO">VENDIDO</option>
+          <option value="RETIRADO SIN REPARACION">RETIRADO SIN REPARACION</option>
+          <option value="RETIRADO CON REPARACION">RETIRADO CON REPARACION</option>
+          <option value="GARANTIA">GARANTIA</option>
+          <option value="ABANDONADO">ABANDONADO</option>
+        </select>
+        <input class="input" type="number" id="garantia-inicial" placeholder="Días de Garantía">
+        <input class="input" type="number" id="precio" placeholder="Precio Final $">
+        <textarea class="input full" id="falla" placeholder="Falla reportada..."></textarea>
+        <textarea class="input full" id="diagnostico" placeholder="Diagnóstico técnico..."></textarea>
+        <textarea class="input full" id="reparacion" placeholder="Detalle de reparación..."></textarea>
+        <div class="full" style="display:flex;gap:10px;">
+          <button class="btn btn-success btn-full" onclick="saveOrder()">💾 GUARDAR / ACTUALIZAR ORDEN</button>
+          <button class="btn btn-ghost" onclick="resetForm()" style="white-space:nowrap;">🔄 Limpiar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & Table -->
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      <input class="input" id="admin-search" placeholder="Buscar por DNI, Nombre, Teléfono o Serie..." style="flex:1;">
+      <button class="btn btn-primary" onclick="renderAdminList()">🔍</button>
+    </div>
+
+    <div class="card" style="overflow:hidden;">
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Orden</th><th>Ingreso</th><th>Salida</th>
+              <th>Cliente</th><th>Teléfono</th><th>Serie</th>
+              <th>Estado</th><th>Garantía</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="admin-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- MODAL: HISTORIAL -->
 <div id="modalHistory" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h2 id="modal-title">Historial Detallado</h2>
-        <div id="modal-data"></div>
-    </div>
+  <div class="modal-box">
+    <button onclick="closeModal()" style="position:absolute;right:16px;top:16px;" class="btn btn-ghost" style="padding:6px 10px;">✕</button>
+    <h2 id="modal-title" style="font-family:var(--font-display);color:var(--accent);margin-bottom:20px;font-size:1.2rem;"></h2>
+    <div id="modal-data"></div>
+  </div>
 </div>
 
+<!-- MODAL: BUSCAR CLIENTE -->
+<div id="modalSearchClient" class="modal">
+  <div class="modal-box">
+    <button onclick="closeSearchModal()" style="position:absolute;right:16px;top:16px;" class="btn btn-ghost">✕</button>
+    <h3 style="font-family:var(--font-display);color:var(--accent);margin-bottom:16px;">Buscar Cliente</h3>
+    <input class="input" id="input-search-client" placeholder="DNI, Nombre o Teléfono..." onkeyup="filterClients()" style="margin-bottom:12px;">
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>Acción</th></tr></thead>
+        <tbody id="search-client-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE -->
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCXnxWmBJkS86_MQKOTa4QaQb0B9Z7K-cY",
-        authDomain: "datamasters-590f6.firebaseapp.com",
-        projectId: "datamasters-590f6",
-        storageBucket: "datamasters-590f6.firebasestorage.app",
-        messagingSenderId: "244192305030",
-        appId: "1:244192305030:web:7b502ac237b2f69bfd5607",
-        measurementId: "G-1SXCR0KQJ4"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyCXnxWmBJkS86_MQKOTa4QaQb0B9Z7K-cY",
+  authDomain: "datamasters-590f6.firebaseapp.com",
+  projectId: "datamasters-590f6",
+  storageBucket: "datamasters-590f6.firebasestorage.app",
+  messagingSenderId: "244192305030",
+  appId: "1:244192305030:web:7b502ac237b2f69bfd5607"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const COLL = "orders";
+const ADMIN_PASS = "alexalex23";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const COLL = "orders";
-    const ADMIN_PASS = "alexalex23";
+let orders = [];
+let orderCounter = parseInt(localStorage.getItem('dm_counter')) || 1001;
 
-    let orders = [];
-    let orderCounter = parseInt(localStorage.getItem('dm_counter')) || 1001;
+/* ── MATRIX INTRO ── */
+(function() {
+  const canvas = document.getElementById('matrix-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const cols = Math.floor(canvas.width / 16);
+  const drops = Array(cols).fill(1);
+  const chars = 'アカサタナハマヤラワ01アイウエオ数字DATAMASTERS';
+  function draw() {
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#00ff41';
+    ctx.font = '14px JetBrains Mono';
+    drops.forEach((y, x) => {
+      const c = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(c, x * 16, y * 16);
+      if (y * 16 > canvas.height && Math.random() > 0.975) drops[x] = 0;
+      drops[x]++;
+    });
+  }
+  const interval = setInterval(draw, 40);
+  setTimeout(() => {
+    const intro = document.getElementById('matrix-intro');
+    intro.classList.add('fade-out');
+    setTimeout(() => {
+      clearInterval(interval);
+      document.getElementById('matrix-canvas').remove();
+      intro.remove();
+      document.getElementById('app').style.opacity = '1';
+      const saved = localStorage.getItem('dm_theme') || 'macos-dark';
+      applyTheme(saved);
+    }, 800);
+  }, 3000);
+})();
 
-    function loading(show) {
-        document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+/* ── THEME SYSTEM ── */
+const themes = {
+  'macOS': [
+    {id:'macos-light', label:'Light', colors:['#f5f5f7','#0071e3']},
+    {id:'macos-dark', label:'Dark', colors:['#1c1c1e','#0a84ff']},
+    {id:'macos-ventura', label:'Ventura', colors:['#f2f2f7','#007aff']},
+    {id:'macos-bigsur', label:'Big Sur', colors:['#e8eaed','#1a73e8']},
+    {id:'macos-monterey', label:'Monterey', colors:['#1a1a2e','#e94560']},
+    {id:'macos-pro', label:'Mac Pro', colors:['#000000','#ff6b00']},
+    {id:'macos-catalina', label:'Catalina', colors:['#f0f4ff','#5e5ce6']},
+    {id:'macos-mojave', label:'Mojave', colors:['#2b1a0e','#d4780f']},
+    {id:'macos-highsierra', label:'High Sierra', colors:['#ecf0f1','#2980b9']},
+    {id:'macos-glass', label:'Frosted Glass', colors:['#667eea','#ffffff']},
+  ],
+  'Windows': [
+    {id:'win11-light', label:'Win 11 Light', colors:['#f3f3f3','#0067c0']},
+    {id:'win11-dark', label:'Win 11 Dark', colors:['#202020','#60cdff']},
+    {id:'win11-acrylic', label:'Acrylic', colors:['#1e1e1e','#60cdff']},
+    {id:'win11-mica', label:'Mica', colors:['#1e1e2e','#89b4fa']},
+    {id:'win10-classic', label:'Win 10', colors:['#0078d4','#005a9e']},
+    {id:'win-highcontrast', label:'High Contrast', colors:['#000000','#1aebff']},
+    {id:'win-fluent', label:'Fluent', colors:['#f5f5f5','#0f62fe']},
+    {id:'win-gaming', label:'Gaming', colors:['#0a0a0a','#00ff41']},
+    {id:'win-sunset', label:'Sunset', colors:['#1a0a00','#ff6b00']},
+    {id:'win-pastel', label:'Pastel', colors:['#fef6fb','#c77dff']},
+  ],
+  'Linux / Retro': [
+    {id:'ubuntu', label:'Ubuntu', colors:['#300a24','#e95420']},
+    {id:'dracula', label:'Dracula', colors:['#282a36','#bd93f9']},
+    {id:'nord', label:'Nord', colors:['#2e3440','#88c0d0']},
+    {id:'cyberpunk', label:'Cyberpunk', colors:['#0d0221','#ff00ff']},
+    {id:'solarized', label:'Solarized', colors:['#002b36','#268bd2']},
+    {id:'gruvbox', label:'Gruvbox', colors:['#282828','#fabd2f']},
+    {id:'retro-terminal', label:'Retro Terminal', colors:['#0a0e0a','#33ff33']},
+    {id:'arch-linux', label:'Arch Linux', colors:['#0a0c14','#1793d1']},
+    {id:'monokai', label:'Monokai', colors:['#272822','#a6e22e']},
+    {id:'vaporwave', label:'Vaporwave', colors:['#1a0030','#ff71ce']},
+  ]
+};
+
+function applyTheme(id) {
+  document.body.setAttribute('data-theme', id);
+  localStorage.setItem('dm_theme', id);
+  document.querySelectorAll('.theme-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.theme === id);
+  });
+}
+window.applyTheme = applyTheme;
+
+function buildThemePanel() {
+  const container = document.getElementById('theme-sections');
+  container.innerHTML = '';
+  for (const [group, list] of Object.entries(themes)) {
+    const section = document.createElement('div');
+    section.style.cssText = 'margin-bottom:20px;';
+    section.innerHTML = `<p style="font-size:0.7rem;font-weight:700;color:var(--text3);letter-spacing:0.1em;margin-bottom:8px;text-transform:uppercase;">${group}</p>`;
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+    list.forEach(t => {
+      const chip = document.createElement('div');
+      chip.className = 'theme-chip';
+      chip.dataset.theme = t.id;
+      chip.style.cssText = `background:${t.colors[0]};color:${t.colors[1]};border-color:${t.colors[1]}40;`;
+      chip.textContent = t.label;
+      chip.onclick = () => applyTheme(t.id);
+      grid.appendChild(chip);
+    });
+    section.appendChild(grid);
+    container.appendChild(section);
+  }
+  const saved = localStorage.getItem('dm_theme') || 'macos-dark';
+  document.querySelectorAll('.theme-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.theme === saved);
+  });
+}
+buildThemePanel();
+
+window.openThemePanel = () => document.getElementById('theme-panel').classList.add('open');
+window.closeThemePanel = () => document.getElementById('theme-panel').classList.remove('open');
+
+/* ── HELPERS ── */
+function loading(show) {
+  document.getElementById('loading-overlay').classList.toggle('show', show);
+}
+function formatDate(d) {
+  if (!d) return '---';
+  const p = d.split('-');
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+}
+function calcWarranty(fechaSalida, dias) {
+  if (!fechaSalida || !dias || dias <= 0) return '---';
+  const diff = Math.floor((Date.now() - new Date(fechaSalida)) / 86400000);
+  const r = dias - diff;
+  return r <= 0
+    ? `<span class="badge badge-red">VENCIDA</span>`
+    : `<span class="badge badge-green">${r} días</span>`;
+}
+function getStatusBadge(estado) {
+  const e = estado.toUpperCase();
+  let cls = 'badge-blue';
+  if (['LISTO','LISTO AVISADO','RETIRADO CON REPARACION','GARANTIA'].includes(e)) cls = 'badge-green';
+  else if (['RECHAZADO','ABANDONADO','RETIRADO SIN REPARACION'].includes(e)) cls = 'badge-red';
+  else if (['EN BANCO','NO VISTO'].includes(e)) cls = 'badge-orange';
+  return `<span class="badge ${cls}">${estado}</span>`;
+}
+
+/* ── NAV ── */
+window.showSection = (id) => {
+  document.getElementById('section-client').style.display = id === 'client' ? 'flex' : 'none';
+  document.getElementById('section-admin').style.display = id === 'admin' ? 'block' : 'none';
+};
+showSection('client');
+
+window.checkAdmin = () => {
+  if (prompt("Clave de Administrador:") === ADMIN_PASS) {
+    showSection('admin');
+    loadOrders();
+  } else { alert("Clave Incorrecta"); }
+};
+
+/* ── FIREBASE OPS ── */
+async function loadOrders() {
+  loading(true);
+  try {
+    const snap = await getDocs(collection(db, COLL));
+    orders = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+    renderAdminList();
+  } catch(e) { alert("Error al cargar: " + e.message); }
+  loading(false);
+}
+
+window.saveOrder = async () => {
+  const editId = document.getElementById('edit-id').value;
+  let numOrden = document.getElementById('orden-num').value;
+  if (!editId) { numOrden = "DM-" + orderCounter; orderCounter++; localStorage.setItem('dm_counter', orderCounter); }
+  const newOrder = {
+    id: editId || Date.now().toString(),
+    orden: numOrden,
+    nombre: document.getElementById('nombre').value,
+    dni: document.getElementById('dni').value,
+    tel: document.getElementById('tel').value,
+    modelo: document.getElementById('modelo').value,
+    serie: document.getElementById('serie').value,
+    accesorios: document.getElementById('accesorios').value,
+    fechaIn: document.getElementById('fecha-in').value,
+    fechaOut: document.getElementById('fecha-out').value,
+    estado: document.getElementById('estado').value,
+    garantiaDias: parseInt(document.getElementById('garantia-inicial').value) || 0,
+    precio: document.getElementById('precio').value,
+    falla: document.getElementById('falla').value,
+    diagnostico: document.getElementById('diagnostico').value,
+    reparacion: document.getElementById('reparacion').value
+  };
+  loading(true);
+  try {
+    if (editId) {
+      const existing = orders.find(o => o.id === editId);
+      await updateDoc(doc(db, COLL, existing._docId), newOrder);
+    } else {
+      await addDoc(collection(db, COLL), newOrder);
     }
+    await loadOrders();
+    resetForm();
+    alert("Orden guardada correctamente.");
+  } catch(e) { alert("Error al guardar: " + e.message); }
+  loading(false);
+};
 
-    function formatDate(dateStr) {
-        if (!dateStr) return "---";
-        const parts = dateStr.split('-');
-        return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
+window.deleteOrder = async (id) => {
+  if (!confirm("¿Eliminar permanentemente esta orden?")) return;
+  const existing = orders.find(o => o.id === id);
+  loading(true);
+  try {
+    await deleteDoc(doc(db, COLL, existing._docId));
+    await loadOrders();
+  } catch(e) { alert("Error al eliminar: " + e.message); }
+  loading(false);
+};
+
+window.renderAdminList = () => {
+  const query = document.getElementById('admin-search').value.toLowerCase();
+  const tbody = document.getElementById('admin-table-body');
+  tbody.innerHTML = "";
+  let filtered = [...orders].sort((a, b) => {
+    if (a.estado === "No Visto" && b.estado !== "No Visto") return -1;
+    if (a.estado !== "No Visto" && b.estado === "No Visto") return 1;
+    return new Date(a.fechaIn) - new Date(b.fechaIn);
+  });
+  const HIDE = ["VENDIDO","RETIRADO SIN REPARACION","RETIRADO CON REPARACION","ABANDONADO"];
+  if (!query) {
+    filtered = filtered.filter(o => !HIDE.includes(o.estado.toUpperCase()));
+  } else {
+    filtered = filtered.filter(o =>
+      (o.nombre||'').toLowerCase().includes(query) ||
+      (o.dni||'').includes(query) ||
+      (o.tel||'').includes(query) ||
+      (o.serie||'').toLowerCase().includes(query)
+    );
+  }
+  filtered.forEach(o => {
+    const reentry = orders.some(x => x.serie === o.serie && x.id !== o.id && x.dni !== o.dni);
+    const isNew = o.estado === "No Visto";
+    const rowClass = isNew ? 'row-novisto' : (reentry ? 'row-reentry' : '');
+    tbody.innerHTML += `<tr class="${rowClass}">
+      <td><b style="color:var(--accent)">${o.orden}</b></td>
+      <td>${formatDate(o.fechaIn)}</td>
+      <td>${formatDate(o.fechaOut)}</td>
+      <td><a href="#" onclick="openHistoryModal('${o.dni}')" style="color:var(--accent);text-decoration:none;">${o.nombre}</a></td>
+      <td>${o.tel}</td>
+      <td>${o.serie}${reentry ? '<br><span class="blink">¡RE-INGRESO!</span>' : ''}</td>
+      <td>${getStatusBadge(o.estado)}</td>
+      <td>${calcWarranty(o.fechaOut, o.garantiaDias)}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-primary" style="padding:5px 8px;font-size:0.75rem;" onclick="editOrder('${o.id}')">✏️</button>
+        <button class="btn btn-danger" style="padding:5px 8px;font-size:0.75rem;" onclick="deleteOrder('${o.id}')">🗑️</button>
+      </td>
+    </tr>`;
+  });
+};
+
+window.editOrder = (id) => {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  document.getElementById('edit-id').value = o.id;
+  document.getElementById('orden-num').value = o.orden;
+  document.getElementById('nombre').value = o.nombre;
+  document.getElementById('dni').value = o.dni;
+  document.getElementById('tel').value = o.tel;
+  document.getElementById('modelo').value = o.modelo;
+  document.getElementById('serie').value = o.serie;
+  document.getElementById('accesorios').value = o.accesorios;
+  document.getElementById('fecha-in').value = o.fechaIn;
+  document.getElementById('fecha-out').value = o.fechaOut;
+  document.getElementById('estado').value = o.estado;
+  document.getElementById('garantia-inicial').value = o.garantiaDias;
+  document.getElementById('precio').value = o.precio;
+  document.getElementById('falla').value = o.falla;
+  document.getElementById('diagnostico').value = o.diagnostico;
+  document.getElementById('reparacion').value = o.reparacion;
+  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('form-title').textContent = `Editando: ${o.orden}`;
+};
+
+/* ── MODALS ── */
+window.openHistoryModal = (dni) => {
+  const matches = orders.filter(o => o.dni === dni);
+  if (!matches.length) return;
+  document.getElementById('modal-title').textContent = "Historial: " + matches[0].nombre;
+  document.getElementById('modal-data').innerHTML = matches.map(o => `
+    <div style="border:1px solid var(--border);padding:16px;margin-bottom:14px;border-radius:var(--radius);background:var(--bg3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <b style="color:var(--accent)">${o.orden}</b>
+        ${getStatusBadge(o.estado)}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.82rem;color:var(--text2);">
+        <div>📅 Ingreso: <b style="color:var(--text)">${formatDate(o.fechaIn)}</b></div>
+        <div>📅 Salida: <b style="color:var(--text)">${formatDate(o.fechaOut)}</b></div>
+        <div>📱 Equipo: <b style="color:var(--text)">${o.modelo}</b></div>
+        <div>🔢 Serie: <b style="color:var(--text)">${o.serie||'---'}</b></div>
+        <div>🛡️ Garantía: ${calcWarranty(o.fechaOut, o.garantiaDias)}</div>
+        <div>💰 Precio: <b style="color:var(--accent2)">$${o.precio||'A confirmar'}</b></div>
+      </div>
+      <hr style="margin:10px 0;border-color:var(--border)">
+      <p style="font-size:0.82rem;margin-bottom:6px;"><b>📋 Falla:</b><br><span style="color:var(--text2)">${o.falla||'---'}</span></p>
+      <p style="font-size:0.82rem;margin-bottom:6px;"><b>🔍 Diagnóstico:</b><br><span style="color:var(--text2)">${o.diagnostico||'---'}</span></p>
+      <p style="font-size:0.82rem;"><b>🔧 Reparación:</b><br><span style="color:var(--text2)">${o.reparacion||'---'}</span></p>
+    </div>`).join('');
+  document.getElementById('modalHistory').classList.add('open');
+};
+window.closeModal = () => document.getElementById('modalHistory').classList.remove('open');
+
+window.openSearchClientModal = () => {
+  document.getElementById('modalSearchClient').classList.add('open');
+  filterClients();
+};
+window.closeSearchModal = () => document.getElementById('modalSearchClient').classList.remove('open');
+
+window.filterClients = () => {
+  const q = document.getElementById('input-search-client').value.toLowerCase();
+  const body = document.getElementById('search-client-body');
+  body.innerHTML = '';
+  const map = new Map();
+  orders.forEach(o => { if (!map.has(o.dni)) map.set(o.dni, {nombre:o.nombre,dni:o.dni,tel:o.tel}); });
+  [...map.values()].filter(c =>
+    (c.nombre||'').toLowerCase().includes(q) ||
+    (c.dni||'').includes(q) ||
+    (c.tel||'').includes(q)
+  ).forEach(c => {
+    body.innerHTML += `<tr>
+      <td>${c.nombre}</td><td>${c.dni}</td><td>${c.tel}</td>
+      <td><button class="btn btn-success" style="padding:4px 10px;font-size:0.75rem;" onclick="selectClient('${c.dni}')">USAR</button></td>
+    </tr>`;
+  });
+};
+
+window.selectClient = (dni) => {
+  const c = orders.find(o => o.dni === dni);
+  if (!c) return;
+  document.getElementById('nombre').value = c.nombre;
+  document.getElementById('dni').value = c.dni;
+  document.getElementById('tel').value = c.tel;
+  closeSearchModal();
+};
+
+/* ── CLIENT QUERY ── */
+window.consultaCliente = async () => {
+  const dni = document.getElementById('dni-consulta').value.trim();
+  const res = document.getElementById('res-consulta');
+  if (!dni) { res.innerHTML = `<p style="color:var(--accent3);text-align:center;font-size:0.85rem;">Ingrese su DNI o Teléfono.</p>`; return; }
+  loading(true);
+  try {
+    const snap = await getDocs(collection(db, COLL));
+    const all = snap.docs.map(d => d.data());
+    const matches = all.filter(x => x.dni === dni || x.tel === dni);
+    const last = matches[matches.length - 1];
+    if (last) {
+      const estadoUp = last.estado.toUpperCase();
+      const PERMITIDOS = ["RETIRADO CON REPARACION","NO VISTO","LISTO","GARANTIA","LISTO AVISADO","EN BANCO","CONFIRMADO","RECHAZADO","PARA LA COMPRA","CONSIGNACION","VENDIDO"];
+      if (!PERMITIDOS.includes(estadoUp)) {
+        res.innerHTML = `
+          <div style="background:var(--accent3);color:white;padding:20px;border-radius:var(--radius);text-align:center;">
+            <div style="font-size:2rem;margin-bottom:8px;">⚠️</div>
+            <h3 style="margin-bottom:8px;">${last.nombre}</h3>
+            <p style="font-weight:600;margin-bottom:12px;">NO PODEMOS DARTE EL INFORME EN ESTE MOMENTO</p>
+            <p style="font-size:0.85rem;margin-bottom:14px;">Comunicate por WhatsApp para más información</p>
+            <a href="https://wa.me/5493515300344" target="_blank"
+               style="display:inline-block;background:white;color:var(--accent3);padding:10px 24px;border-radius:var(--radius-sm);font-weight:700;text-decoration:none;">
+               📲 Ir al WhatsApp
+            </a>
+          </div>`;
+      } else {
+        res.innerHTML = `
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div style="font-size:0.72rem;color:var(--text3);margin-bottom:2px;">CLIENTE</div>
+                <div style="font-weight:700;font-size:1rem;color:var(--text);">👤 ${last.nombre}</div>
+              </div>
+              ${getStatusBadge(last.estado)}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.82rem;margin-bottom:12px;">
+              <div style="color:var(--text2);">N° Orden: <b style="color:var(--accent)">${last.orden}</b></div>
+              <div style="color:var(--text2);">Equipo: <b style="color:var(--text)">${last.modelo}</b></div>
+              <div style="color:var(--text2);">Ingreso: <b style="color:var(--text)">${formatDate(last.fechaIn)}</b></div>
+              <div style="color:var(--text2);">Salida: <b style="color:var(--text)">${formatDate(last.fechaOut)}</b></div>
+              <div style="color:var(--text2);">Garantía: ${calcWarranty(last.fechaOut, last.garantiaDias)}</div>
+              <div style="color:var(--text2);">Precio: <b style="color:var(--accent2)">$${last.precio||'A confirmar'}</b></div>
+            </div>
+            <hr style="border-color:var(--border);margin-bottom:12px;">
+            <p style="font-size:0.8rem;margin-bottom:6px;"><b style="color:var(--text);">📋 Falla:</b><br><span style="color:var(--text2)">${last.falla||'No especificada'}</span></p>
+            <p style="font-size:0.8rem;margin-bottom:6px;"><b style="color:var(--text);">🔍 Diagnóstico:</b><br><span style="color:var(--text2)">${last.diagnostico||'Pendiente'}</span></p>
+            <p style="font-size:0.8rem;"><b style="color:var(--text);">🔧 Reparación:</b><br><span style="color:var(--text2)">${last.reparacion||'Pendiente'}</span></p>
+          </div>`;
+      }
+    } else {
+      res.innerHTML = `<p style="color:var(--accent3);text-align:center;font-size:0.85rem;padding:20px;">No se encontraron órdenes para ese DNI/Teléfono.</p>`;
     }
+  } catch(e) { res.innerHTML = `<p style="color:var(--accent3);">Error: ${e.message}</p>`; }
+  loading(false);
+};
 
-    function calculateWarranty(fechaSalida, diasGarantia) {
-        if (!fechaSalida || !diasGarantia || diasGarantia <= 0) return "---";
-        const diff = Math.floor((new Date() - new Date(fechaSalida)) / (1000 * 60 * 60 * 24));
-        const restante = diasGarantia - diff;
-        return restante <= 0 ? `<span style="color:red">FUERA DE GARANTIA</span>` : `<span style="color:green">${restante} días</span>`;
-    }
+/* ── BACKUP ── */
+window.downloadBackup = () => {
+  const data = JSON.stringify({ orders, counter: orderCounter }, null, 2);
+  const a = document.createElement('a');
+  a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(data);
+  a.download = `Respaldo_DataMasters_${new Date().toLocaleDateString('es').replace(/\//g,'-')}.json`;
+  a.click();
+};
+window.loadBackup = async (e) => {
+  const reader = new FileReader();
+  reader.onload = async (x) => {
+    const imp = JSON.parse(x.target.result);
+    const impOrders = imp.orders || [];
+    orderCounter = imp.counter || 1001;
+    localStorage.setItem('dm_counter', orderCounter);
+    loading(true);
+    try {
+      for (const o of impOrders) await addDoc(collection(db, COLL), o);
+      await loadOrders();
+      alert(`${impOrders.length} órdenes importadas correctamente.`);
+    } catch(err) { alert("Error al importar: " + err.message); }
+    loading(false);
+  };
+  reader.readAsText(e.target.files[0]);
+};
 
-    window.showSection = (id) => {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-    };
+/* ── RESET FORM ── */
+window.resetForm = () => {
+  document.getElementById('order-form')?.reset?.();
+  ['edit-id','orden-num','nombre','dni','tel','modelo','serie','accesorios','fecha-in','fecha-out','garantia-inicial','precio','falla','diagnostico','reparacion'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('estado').value = 'No Visto';
+  document.getElementById('form-title').textContent = 'Nueva Orden de Trabajo';
+};
 
-    window.checkAdmin = () => {
-        if (prompt("Clave de Administrador:") === ADMIN_PASS) {
-            showSection('admin-view');
-            loadOrders();
-        } else { alert("Clave Incorrecta"); }
-    };
+/* ── LOGO ── */
+window.loadLogo = (e) => {
+  const reader = new FileReader();
+  reader.onload = (x) => {
+    const img = document.getElementById('logo-display');
+    img.src = x.target.result;
+    img.style.display = 'block';
+    localStorage.setItem('dm_logo', x.target.result);
+  };
+  reader.readAsDataURL(e.target.files[0]);
+};
+window.onload = () => {
+  const logo = localStorage.getItem('dm_logo');
+  if (logo) { const img = document.getElementById('logo-display'); img.src = logo; img.style.display = 'block'; }
+};
 
-    async function loadOrders() {
-        loading(true);
-        try {
-            const snap = await getDocs(collection(db, COLL));
-            orders = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
-            renderAdminList();
-        } catch(e) { alert("Error al cargar datos: " + e.message); }
-        loading(false);
-    }
+/* ── SHARE ── */
+const PAGE_URL = encodeURIComponent(window.location.href);
+const PAGE_MSG = encodeURIComponent("Seguí el estado de tu equipo en DATA MASTERS: " + window.location.href);
+window.shareWA = () => window.open(`https://wa.me/?text=${PAGE_MSG}`, '_blank');
+window.shareTG = () => window.open(`https://t.me/share/url?url=${PAGE_URL}&text=${encodeURIComponent('DATA MASTERS – Gestión Técnica')}`, '_blank');
+window.shareTW = () => window.open(`https://twitter.com/intent/tweet?text=${PAGE_MSG}`, '_blank');
+window.copyLink = () => {
+  navigator.clipboard.writeText(window.location.href).then(() => alert('¡Enlace copiado!'));
+};
 
-    window.saveOrder = async () => {
-        const editId = document.getElementById('edit-id').value;
-        let numOrden = document.getElementById('orden-num').value;
-        if (!editId) { numOrden = "DM-" + orderCounter; orderCounter++; localStorage.setItem('dm_counter', orderCounter); }
+</script>
 
-        const newOrder = {
-            id: editId || Date.now().toString(),
-            orden: numOrden,
-            nombre: document.getElementById('nombre').value,
-            dni: document.getElementById('dni').value,
-            tel: document.getElementById('tel').value,
-            modelo: document.getElementById('modelo').value,
-            serie: document.getElementById('serie').value,
-            accesorios: document.getElementById('accesorios').value,
-            fechaIn: document.getElementById('fecha-in').value,
-            fechaOut: document.getElementById('fecha-out').value,
-            estado: document.getElementById('estado').value,
-            garantiaDias: parseInt(document.getElementById('garantia-inicial').value) || 0,
-            precio: document.getElementById('precio').value,
-            falla: document.getElementById('falla').value,
-            diagnostico: document.getElementById('diagnostico').value,
-            reparacion: document.getElementById('reparacion').value
-        };
-
-        loading(true);
-        try {
-            if (editId) {
-                const existing = orders.find(o => o.id === editId);
-                await updateDoc(doc(db, COLL, existing._docId), newOrder);
-            } else {
-                await addDoc(collection(db, COLL), newOrder);
-            }
-            await loadOrders();
-            resetForm();
-            alert("Orden guardada.");
-        } catch(e) { alert("Error al guardar: " + e.message); }
-        loading(false);
-    };
-
-    window.deleteOrder = async (id) => {
-        if (!confirm("¿Eliminar permanentemente?")) return;
-        const existing = orders.find(o => o.id === id);
-        loading(true);
-        try {
-            await deleteDoc(doc(db, COLL, existing._docId));
-            await loadOrders();
-        } catch(e) { alert("Error al eliminar: " + e.message); }
-        loading(false);
-    };
-
-    window.renderAdminList = () => {
-        const query = document.getElementById('admin-search').value.toLowerCase();
-        const tbody = document.getElementById('admin-table-body');
-        tbody.innerHTML = "";
-        let filtered = [...orders].sort((a, b) => {
-            if (a.estado === "No Visto" && b.estado !== "No Visto") return -1;
-            if (a.estado !== "No Visto" && b.estado === "No Visto") return 1;
-            return new Date(a.fechaIn) - new Date(b.fechaIn);
-        });
-        if (!query) {
-            const ocultar = ["VENDIDO","RETIRADO SIN REPARACION","RETIRADO CON REPARACION","ABANDONADO"];
-            filtered = filtered.filter(o => !ocultar.includes(o.estado.toUpperCase()));
-        } else {
-            filtered = filtered.filter(o => o.nombre.toLowerCase().includes(query) || o.dni.includes(query) || o.tel.includes(query) || o.serie.toLowerCase().includes(query));
-        }
-        filtered.forEach(o => {
-            const reentry = orders.some(x => x.serie === o.serie && x.dni !== o.dni);
-            const cl = o.estado === "No Visto" ? "status-no-visto" : (reentry ? "row-reentry" : "");
-            tbody.innerHTML += `<tr class="${cl}">
-                <td><b>${o.orden}</b></td>
-                <td>${formatDate(o.fechaIn)}</td><td>${formatDate(o.fechaOut)}</td>
-                <td><a href="#" onclick="openHistoryModal('${o.dni}')">${o.nombre}</a></td>
-                <td>${o.tel}</td>
-                <td>${o.serie}${reentry ? '<br><span class="blink">¡RE-INGRESO!</span>' : ''}</td>
-                <td>${o.estado}</td>
-                <td>${calculateWarranty(o.fechaOut, o.garantiaDias)}</td>
-                <td>
-                    <button class="btn-client" style="padding:5px" onclick="editOrder('${o.id}')">✏️</button>
-                    <button class="btn-del" onclick="deleteOrder('${o.id}')">🗑️</button>
-                </td>
-            </tr>`;
-        });
-    };
-
-    window.openSearchClientModal = () => { document.getElementById('modalSearchClient').style.display = "block"; filterClients(); };
-    window.closeSearchModal = () => { document.getElementById('modalSearchClient').style.display = "none"; };
-
-    window.filterClients = () => {
-        const q = document.getElementById('input-search-client').value.toLowerCase();
-        const body = document.getElementById('search-client-body');
-        body.innerHTML = "";
-        const map = new Map();
-        for (const item of orders) { if (!map.has(item.dni)) map.set(item.dni, {nombre: item.nombre, dni: item.dni, tel: item.tel}); }
-        [...map.values()].filter(c => c.nombre.toLowerCase().includes(q) || c.dni.includes(q) || c.tel.includes(q)).forEach(c => {
-            body.innerHTML += `<tr><td>${c.nombre}</td><td>${c.dni}</td><td>${c.tel}</td>
-                <td><button onclick="selectClient('${c.dni}')" style="background:var(--success);padding:5px;">SELECCIONAR</button></td></tr>`;
-        });
-    };
-
-    window.selectClient = (dni) => {
-        const c = orders.find(o => o.dni === dni);
-        document.getElementById('nombre').value = c.nombre;
-        document.getElementById('dni').value = c.dni;
-        document.getElementById('tel').value = c.tel;
-        closeSearchModal();
-    };
-
-    window.editOrder = (id) => {
-        const o = orders.find(x => x.id === id);
-        document.getElementById('edit-id').value = o.id;
-        document.getElementById('orden-num').value = o.orden;
-        document.getElementById('nombre').value = o.nombre;
-        document.getElementById('dni').value = o.dni;
-        document.getElementById('tel').value = o.tel;
-        document.getElementById('modelo').value = o.modelo;
-        document.getElementById('serie').value = o.serie;
-        document.getElementById('accesorios').value = o.accesorios;
-        document.getElementById('fecha-in').value = o.fechaIn;
-        document.getElementById('fecha-out').value = o.fechaOut;
-        document.getElementById('estado').value = o.estado;
-        document.getElementById('garantia-inicial').value = o.garantiaDias;
-        document.getElementById('precio').value = o.precio;
-        document.getElementById('falla').value = o.falla;
-        document.getElementById('diagnostico').value = o.diagnostico;
-        document.getElementById('reparacion').value = o.reparacion;
-        window.scrollTo(0, 0);
-    };
-
-    // ── HISTORIAL ADMIN: muestra todos los detalles ───────────
-    window.openHistoryModal = (dni) => {
-        const matches = orders.filter(o => o.dni === dni);
-        document.getElementById('modal-title').innerText = "Historial: " + matches[0].nombre;
-        document.getElementById('modal-data').innerHTML = matches.map(o => `
-            <div style="border:1px solid #ddd;padding:15px;margin-bottom:15px;border-radius:8px;">
-                <p><strong>N° Orden:</strong> ${o.orden} | <strong>Estado:</strong> ${o.estado}</p>
-                <p><strong>Ingreso:</strong> ${formatDate(o.fechaIn)} | <strong>Salida:</strong> ${formatDate(o.fechaOut)}</p>
-                <p><strong>Equipo:</strong> ${o.modelo} | <strong>Serie:</strong> ${o.serie || '---'}</p>
-                <p><strong>Garantía:</strong> ${calculateWarranty(o.fechaOut, o.garantiaDias)} | <strong>Precio:</strong> $${o.precio || '0'}</p>
-                <hr style="margin:10px 0;border-color:#eee">
-                <p><strong>📋 Falla reportada:</strong><br><span style="color:#555">${o.falla || '---'}</span></p>
-                <p><strong>🔍 Diagnóstico técnico:</strong><br><span style="color:#555">${o.diagnostico || '---'}</span></p>
-                <p><strong>🔧 Trabajo realizado:</strong><br><span style="color:#555">${o.reparacion || '---'}</span></p>
-            </div>`).join('');
-        document.getElementById('modalHistory').style.display = "block";
-    };
-
-    window.closeModal = () => { document.getElementById('modalHistory').style.display = "none"; };
-
-    // ── CONSULTA CLIENTE PÚBLICO ──────────────────────────────
-    window.consultaCliente = async () => {
-        const dni = document.getElementById('dni-consulta').value.trim();
-        const res = document.getElementById('res-consulta');
-        if (!dni) { res.innerHTML = "<p style='color:red;text-align:center;'>Ingrese su DNI o Teléfono.</p>"; return; }
-        loading(true);
-        try {
-            const snap = await getDocs(collection(db, COLL));
-            const all = snap.docs.map(d => d.data());
-            const matches = all.filter(x => x.dni === dni || x.tel === dni);
-            const last = matches[matches.length - 1];
-            if (last) {
-                const estadoUp = last.estado.toUpperCase();
-                const estadosPermitidos = [
-                    "RETIRADO CON REPARACION","NO VISTO","LISTO","GARANTIA",
-                    "LISTO AVISADO","EN BANCO","CONFIRMADO","RECHAZADO",
-                    "PARA LA COMPRA","CONSIGNACION","VENDIDO"
-                ];
-                const esRetirado = estadoUp === ["RETIRADO CON REPARACION","NO VISTO","LISTO","GARANTIA",
-                    "LISTO AVISADO","EN BANCO","CONFIRMADO","RECHAZADO",
-                    "PARA LA COMPRA","CONSIGNACION","VENDIDO" ];
-
-                if (!estadosPermitidos.includes(estadoUp)) {
-                    res.innerHTML = `
-                        <div style="background:#c0392b;color:white;padding:25px;border-radius:10px;text-align:center;">
-                            <h3 style="margin-top:0">⚠️ ${last.nombre}</h3>
-                            <p style="font-size:1.1em;font-weight:bold;letter-spacing:1px;">NO TE PUEDO DAR EL INFORME.</p>
-                            <p>SI ES NECESARIO COMUNICATE AL WHATSAPP</p>
-                            <a href="https://wa.me/5493515300344" target="_blank"
-                               style="display:inline-block;margin-top:12px;background:white;color:#c0392b;padding:10px 22px;border-radius:6px;font-weight:bold;text-decoration:none;">
-                               📲 Ir al WhatsApp
-                            </a>
-                        </div>`;
-                } else {
-    // Definimos si debe mostrar la info detallada (falla, diagnóstico, reparación)
-    // Aquí puedes decidir si se muestra para TODOS los estados permitidos
-    // o solo para algunos específicos.
-    const mostrarDetalleCompleto = estadosPermitidos.includes(estadoUp);
-
-    const extraInfo = mostrarDetalleCompleto ? `
-        <hr style="border-color:rgba(255,255,255,0.3);margin:12px 0">
-        <p><strong>📋 Falla reportada:</strong><br>${last.falla || 'No especificada'}</p>
-        <p><strong>🔍 Diagnóstico técnico:</strong><br>${last.diagnostico || 'No especificado'}</p>
-        <p><strong>🔧 Trabajo realizado:</strong><br>${last.reparacion || 'No especificado'}</p>
-    ` : `
-        <hr style="border-color:rgba(255,255,255,0.3);margin:12px 0">
-        <p><strong>Diagnóstico:</strong> ${last.diagnostico || 'Pendiente'}</p>
-    `;
-
-    res.innerHTML = `
-        <div style="background:var(--primary);color:white;padding:20px;border-radius:10px;">
-            <h3 style="margin-top:0">👤 ${last.nombre}</h3>
-            <p><strong>Estado:</strong> <span style="background:#27ae60;padding:3px 10px;border-radius:4px;">${last.estado}</span></p>
-            <p>N° Orden: ${last.orden} | Equipo: ${last.modelo}</p>
-            <p>Ingreso: ${formatDate(last.fechaIn)} | Salida: ${formatDate(last.fechaOut)}</p>
-            <p>Garantía: ${calculateWarranty(last.fechaOut, last.garantiaDias)}</p>
-            <p>Precio: $${last.precio || 'A confirmar'}</p>
-            ${extraInfo}
-                        </div>`;
-                }
-            } else {
-                res.innerHTML = "<p style='color:red;text-align:center;'>No encontrado.</p>";
-            }
-        } catch(e) { res.innerHTML = "<p style='color:red;'>Error: " + e.message + "</p>"; }
-        loading(false);
-    };
-
-    window.downloadBackup = () => {
-        const data = JSON.stringify({ orders, counter: orderCounter }, null, 2);
-        const link = document.createElement('a');
-        link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(data);
-        link.download = `Respaldo_DataMasters_${new Date().toLocaleDateString().replace(/\//g,'-')}.json`;
-        link.click();
-    };
-
-    window.loadBackup = async (e) => {
-        const reader = new FileReader();
-        reader.onload = async (x) => {
-            const imported = JSON.parse(x.target.result);
-            const importedOrders = imported.orders || [];
-            orderCounter = imported.counter || 1001;
-            localStorage.setItem('dm_counter', orderCounter);
-            loading(true);
-            try {
-                for (const o of importedOrders) { await addDoc(collection(db, COLL), o); }
-                await loadOrders();
-                alert(`${importedOrders.length} órdenes importadas correctamente.`);
-            } catch(err) { alert("Error al importar: " + err.message); }
-            loading(false);
-        };
-        reader.readAsText(e.target.files[0]);
-    };
-
-    window.resetForm = () => {
-        document.getElementById('order-form').reset();
-        document.getElementById('edit-id').value = "";
-        document.getElementById('orden-num').value = "";
-    };
-
-    window.loadLogo = (e) => {
-        const reader = new FileReader();
-        reader.onload = (x) => {
-            const img = document.getElementById('logo-display');
-            img.src = x.target.result;
-            img.style.display = 'block';
-            localStorage.setItem('dm_logo', x.target.result);
-        };
-        reader.readAsDataURL(e.target.files[0]);
-    };
-
-    window.onload = () => {
-        const logo = localStorage.getItem('dm_logo');
-        if (logo) { const img = document.getElementById('logo-display'); img.src = logo; img.style.display = 'block'; }
-    };
+<!-- Close theme panel on outside click -->
+<script>
+document.addEventListener('click', e => {
+  const panel = document.getElementById('theme-panel');
+  if (!panel.contains(e.target) && !e.target.closest('[onclick="openThemePanel()"]')) {
+    panel.classList.remove('open');
+  }
+});
+document.querySelectorAll('.modal').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
 </script>
 </body>
 </html>
