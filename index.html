@@ -467,6 +467,24 @@ textarea.input { resize: vertical; min-height: 80px; }
   .form-grid { grid-template-columns: 1fr; }
   #theme-panel { width: 100%; right: -100%; }
 }
+
+/* -- WhatsApp tools -- */
+.btn-wa { background: #25D366; color: white; padding: 5px 8px; font-size: 0.75rem; border-radius: var(--radius-sm); display:inline-flex; align-items:center; gap:4px; }
+.btn-wa:hover { background: #1ebe57; transform: translateY(-2px) scale(1.03); }
+.wa-config-box {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: color-mix(in srgb, #25D366 12%, var(--bg2));
+  border: 1px solid color-mix(in srgb, #25D366 55%, var(--border));
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px;
+}
+.wa-config-box label { font-weight: 700; color: #1ebe57; font-size: 0.85rem; white-space: nowrap; display:flex; align-items:center; gap:6px; }
+.wa-config-box input { max-width: 220px; border-color: #25D366; }
+.btn-wa-save { background: #25D366; color: white; padding: 9px 14px; font-size: 0.8rem; }
+.btn-wa-save:hover { background: #1ebe57; }
+.wa-status { font-size: 0.8rem; color: var(--text2); }
+.wa-status span { font-weight: 700; color: #1ebe57; }
+.wa-preview-panel { background: color-mix(in srgb, #25D366 12%, var(--bg3)); border: 1px solid color-mix(in srgb, #25D366 45%, var(--border)); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; font-size: 0.85rem; color: var(--text2); }
+
 </style>
 </head>
 <body data-theme="macos-dark">
@@ -576,6 +594,18 @@ textarea.input { resize: vertical; min-height: 80px; }
       </div>
     </div>
 
+
+
+    <div class="wa-config-box">
+      <label>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#25D366" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WHATSAPP EMPRESA:
+      </label>
+      <input class="input" type="text" id="wa-number-config" placeholder="Ej: 5493515300344" title="Numero con codigo de pais, sin + ni espacios">
+      <button class="btn btn-wa-save" onclick="saveWANumber()">Guardar Numero</button>
+      <span class="wa-status" id="wa-status-text">Numero configurado: <span id="wa-number-display">---</span></span>
+    </div>
+
     <div class="card" style="padding:24px;margin-bottom:24px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
         <h3 id="form-title" style="font-family:var(--font-display);color:var(--accent);font-size:1.1rem;">Nueva Orden de Trabajo</h3>
@@ -673,6 +703,29 @@ textarea.input { resize: vertical; min-height: 80px; }
   </div>
 </div>
 
+
+<!-- MODAL: PREVIEW WHATSAPP -->
+<div id="modalWA" class="modal">
+  <div class="modal-box" style="max-width:520px;">
+    <button onclick="closeWAModal()" style="position:absolute;right:16px;top:16px;" class="btn btn-ghost">x</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#25D366" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <h3 style="margin:0;color:#1ebe57;font-family:var(--font-display);font-size:1.15rem;">Enviar por WhatsApp</h3>
+    </div>
+    <div class="wa-preview-panel">
+      <strong>Para:</strong> <span id="wa-preview-name" style="color:var(--text);"></span><br>
+      <strong>Numero:</strong> <span id="wa-preview-tel" style="color:var(--text);"></span>
+    </div>
+    <label style="font-weight:700;font-size:0.85rem;display:block;margin-bottom:6px;color:var(--text);">Mensaje a enviar:</label>
+    <textarea id="wa-message-preview" class="input" rows="10" style="min-height:220px;resize:vertical;"></textarea>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button onclick="openWhatsApp()" class="btn btn-success" style="flex:1;background:#25D366;">ABRIR EN WHATSAPP</button>
+      <button onclick="closeWAModal()" class="btn btn-ghost" style="flex:0.4;">CANCELAR</button>
+    </div>
+    <p style="font-size:0.75rem;color:var(--text3);margin-top:10px;text-align:center;">Se abrira WhatsApp Web o la app con el mensaje listo para enviar.</p>
+  </div>
+</div>
+
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -693,6 +746,7 @@ const ADMIN_PASS = "alexalex23";
 
 let orders = [];
 let orderCounter = parseInt(localStorage.getItem('dm_counter')) || 1001;
+let currentWAOrder = null;
 
 /* ── MATRIX INTRO ── */
 (function() {
@@ -827,6 +881,13 @@ function calcWarranty(fechaSalida, dias) {
     ? `<span class="badge badge-red">VENCIDA</span>`
     : `<span class="badge badge-green">${r} días</span>`;
 }
+function calcWarrantyText(fechaSalida, dias) {
+  if (!fechaSalida || !dias || dias <= 0) return 'Sin garantia';
+  const diff = Math.floor((Date.now() - new Date(fechaSalida)) / 86400000);
+  const r = dias - diff;
+  return r <= 0 ? 'Fuera de garantia' : r + ' dias restantes';
+}
+
 function getStatusBadge(estado) {
   const e = estado.toUpperCase();
   let cls = 'badge-blue';
@@ -847,6 +908,7 @@ window.checkAdmin = () => {
   if (prompt("Clave de Administrador:") === ADMIN_PASS) {
     showSection('admin');
     loadOrders();
+    updateWADisplay();
   } else { alert("Clave Incorrecta"); }
 };
 
@@ -909,6 +971,74 @@ window.deleteOrder = async (id) => {
   loading(false);
 };
 
+
+/* -- WHATSAPP -- */
+const WA_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" style="vertical-align:middle" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
+
+window.saveWANumber = () => {
+  const num = document.getElementById('wa-number-config').value.trim().replace(/\D/g, '');
+  if (!num) { alert('Ingresa un numero valido.'); return; }
+  localStorage.setItem('dm_wa_number', num);
+  updateWADisplay();
+  alert('Numero de WhatsApp guardado: ' + num);
+};
+
+function updateWADisplay() {
+  const num = localStorage.getItem('dm_wa_number') || '';
+  const display = document.getElementById('wa-number-display');
+  const input = document.getElementById('wa-number-config');
+  if (!display || !input) return;
+  if (num) {
+    display.textContent = '+' + num;
+    input.value = num;
+  } else {
+    display.textContent = '---';
+  }
+}
+
+window.openWAModal = (id) => {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  currentWAOrder = o;
+  const waNum = localStorage.getItem('dm_wa_number') || '5493515300344';
+  const empresaNum = '+' + waNum;
+  const msgParts = [
+    'Hola ' + o.nombre + '!',
+    '',
+    'Te contactamos desde *Data Masters* para informarte sobre el estado de tu equipo.',
+    '',
+    '*Numero de Orden:* ' + o.orden,
+    '*Equipo:* ' + o.modelo,
+    '*Serie:* ' + (o.serie || '---'),
+    '*Ingreso:* ' + formatDate(o.fechaIn)
+  ];
+  if (o.fechaOut) msgParts.push('*Salida:* ' + formatDate(o.fechaOut));
+  msgParts.push('*Estado:* ' + o.estado);
+  msgParts.push('*Precio:* $' + (o.precio || 'A confirmar'));
+  msgParts.push('*Garantia:* ' + calcWarrantyText(o.fechaOut, o.garantiaDias));
+  if (o.diagnostico) msgParts.push('', '*Diagnostico:* ' + o.diagnostico);
+  if (o.reparacion) msgParts.push('', '*Trabajo realizado:* ' + o.reparacion);
+  msgParts.push('', 'Ante cualquier consulta estamos disponibles.', '*Data Masters* | WhatsApp: ' + empresaNum);
+  document.getElementById('wa-preview-name').textContent = o.nombre;
+  document.getElementById('wa-preview-tel').textContent = o.tel;
+  document.getElementById('wa-message-preview').value = msgParts.join('\n');
+  document.getElementById('modalWA').classList.add('open');
+};
+
+window.openWhatsApp = () => {
+  if (!currentWAOrder) return;
+  const tel = (currentWAOrder.tel || '').replace(/\D/g, '');
+  const msg = document.getElementById('wa-message-preview').value;
+  const fullTel = tel.startsWith('54') ? tel : '54' + (tel.startsWith('9') ? tel : '9' + tel);
+  window.open('https://wa.me/' + fullTel + '?text=' + encodeURIComponent(msg), '_blank');
+  closeWAModal();
+};
+
+window.closeWAModal = () => {
+  document.getElementById('modalWA').classList.remove('open');
+  currentWAOrder = null;
+};
+
 window.renderAdminList = () => {
   const query = document.getElementById('admin-search').value.toLowerCase();
   const tbody = document.getElementById('admin-table-body');
@@ -942,9 +1072,10 @@ window.renderAdminList = () => {
       <td>${o.serie}${reentry ? '<br><span class="blink">¡RE-INGRESO!</span>' : ''}</td>
       <td>${getStatusBadge(o.estado)}</td>
       <td>${calcWarranty(o.fechaOut, o.garantiaDias)}</td>
-      <td style="white-space:nowrap;">
+      <td style="white-space:nowrap;display:flex;gap:4px;align-items:center;">
         <button class="btn btn-primary" style="padding:5px 8px;font-size:0.75rem;" onclick="editOrder('${o.id}')">✏️</button>
         <button class="btn btn-danger" style="padding:5px 8px;font-size:0.75rem;" onclick="deleteOrder('${o.id}')">🗑️</button>
+        <button class="btn btn-wa" onclick="openWAModal('${o.id}')" title="Enviar estado por WhatsApp">${WA_ICON_SVG}</button>
       </td>
     </tr>`;
   });
@@ -1142,6 +1273,7 @@ window.loadLogo = (e) => {
 window.onload = () => {
   const logo = localStorage.getItem('dm_logo');
   if (logo) { const img = document.getElementById('logo-display'); img.src = logo; img.style.display = 'block'; }
+  updateWADisplay();
 };
 
 /* ── SHARE ── */
