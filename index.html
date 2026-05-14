@@ -926,7 +926,25 @@ async function loadOrders() {
   loading(true);
   try {
     const snap = await getDocs(collection(db, COLL));
-    orders = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+    const all = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+
+    // Deduplicacion automatica: conserva el primero por campo id, elimina el resto en Firestore
+    const seen = new Map();
+    const dupes = [];
+    all.forEach(o => {
+      const key = o.id || o.orden;
+      if (!seen.has(key)) { seen.set(key, o); }
+      else { dupes.push(o._docId); }
+    });
+    orders = [...seen.values()];
+
+    if (dupes.length > 0) {
+      for (const docId of dupes) {
+        try { await deleteDoc(doc(db, COLL, docId)); } catch(_) {}
+      }
+      console.log('[DataMasters] ' + dupes.length + ' duplicado(s) eliminado(s) automaticamente.');
+    }
+
     renderAdminList();
   } catch(e) { alert("Error al cargar: " + e.message); }
   loading(false);
@@ -1311,9 +1329,23 @@ window.loadBackup = async (e) => {
     localStorage.setItem('dm_counter', orderCounter);
     loading(true);
     try {
-      for (const o of impOrders) await addDoc(collection(db, COLL), o);
+      // Cargar IDs ya existentes en Firestore para evitar duplicados
+      const snap = await getDocs(collection(db, COLL));
+      const existingKeys = new Set(
+        snap.docs.map(d => { const dat = d.data(); return dat.id || dat.orden; })
+      );
+      let added = 0, skipped = 0;
+      for (const o of impOrders) {
+        const key = o.id || o.orden;
+        if (!existingKeys.has(key)) {
+          await addDoc(collection(db, COLL), o);
+          added++;
+        } else {
+          skipped++;
+        }
+      }
       await loadOrders();
-      alert(`${impOrders.length} órdenes importadas correctamente.`);
+      alert('Importacion completada.\n+ ' + added + ' ordenes nuevas importadas.\n= ' + skipped + ' ordenes ya existentes (omitidas sin duplicar).');
     } catch(err) { alert("Error al importar: " + err.message); }
     loading(false);
   };
