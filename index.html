@@ -983,7 +983,14 @@ window.saveOrder = async () => {
     }
     await loadOrders();
     resetForm();
-    alert("Orden guardada correctamente.");
+    const ESTADOS_WA = ['RETIRADO CON REPARACION', 'RETIRADO SIN REPARACION'];
+    if (ESTADOS_WA.includes(newOrder.estado.toUpperCase())) {
+      if (confirm('✅ Orden guardada correctamente.\n\n¿Querés enviar el estado al cliente por WhatsApp?')) {
+        openWAModal(newOrder.id);
+      }
+    } else {
+      alert("Orden guardada correctamente.");
+    }
   } catch(e) { alert("Error al guardar: " + e.message); }
   loading(false);
 };
