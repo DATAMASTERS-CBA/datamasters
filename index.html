@@ -551,7 +551,7 @@ textarea.input { resize: vertical; min-height: 80px; }
         <h2 style="font-family:var(--font-display);color:var(--accent);font-size:1.5rem;margin-bottom:6px;">Seguimiento Online</h2>
         <p style="color:var(--text2);font-size:0.85rem;">Ingresá tu DNI o Teléfono para ver el estado de tu equipo</p>
       </div>
-      <input class="input" id="dni-consulta" placeholder="DNI o Teléfono" style="margin-bottom:12px;">
+      <input class="input" id="dni-consulta" placeholder="DNI, Teléfono o N° de Orden" style="margin-bottom:12px;">
       <button class="btn btn-primary btn-full" onclick="consultaCliente()">
         <span class="icon-shadow">🔎</span> VER ESTADO DE MI EQUIPO
       </button>
@@ -657,6 +657,21 @@ textarea.input { resize: vertical; min-height: 80px; }
         <textarea class="input full" id="falla" placeholder="Falla reportada..."></textarea>
         <textarea class="input full" id="diagnostico" placeholder="Diagnóstico técnico..."></textarea>
         <textarea class="input full" id="reparacion" placeholder="Detalle de reparación..."></textarea>
+        
+        <!-- FOTOS DEL EQUIPO - Solo Admin -->
+        <div class="full" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <label style="font-size:0.82rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;">
+              📷 Fotos del Equipo <span style="font-size:0.7rem;font-weight:400;color:var(--text3);">(solo visible para administrador)</span>
+            </label>
+            <label style="cursor:pointer;" title="Agregar fotos">
+              <span class="btn btn-ghost" style="font-size:0.75rem;padding:5px 12px;">➕ Agregar Fotos</span>
+              <input type="file" accept="image/*" multiple onchange="agregarFotos(event)" style="display:none;">
+            </label>
+          </div>
+          <div id="fotos-preview" style="display:flex;flex-wrap:wrap;gap:8px;min-height:40px;"></div>
+        </div>
+
         <div class="full" style="display:flex;gap:10px;">
           <button class="btn btn-success btn-full" onclick="saveOrder()">💾 GUARDAR / ACTUALIZAR ORDEN</button>
           <button class="btn btn-ghost" onclick="resetForm()" style="white-space:nowrap;">🔄 Limpiar</button>
@@ -666,7 +681,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 
     <!-- Search & Table -->
     <div style="display:flex;gap:10px;margin-bottom:16px;">
-      <input class="input" id="admin-search" placeholder="Buscar por DNI, Nombre, Teléfono o Serie..." style="flex:1;">
+      <input class="input" id="admin-search" placeholder="Buscar por DNI, Nombre, Teléfono, Serie o N° Orden..." style="flex:1;">
       <button class="btn btn-primary" onclick="renderAdminList()">🔍</button>
     </div>
 
@@ -953,7 +968,21 @@ async function loadOrders() {
 window.saveOrder = async () => {
   const editId = document.getElementById('edit-id').value;
   let numOrden = document.getElementById('orden-num').value;
-  if (!editId) { numOrden = "DM-" + orderCounter; orderCounter++; localStorage.setItem('dm_counter', orderCounter); }
+  if (!editId) {
+    const nombre = document.getElementById('nombre').value.trim();
+    // Generar número base
+    let baseNum = "DM-" + orderCounter;
+    // Verificar si ya existe ese número de orden (colisión)
+    const exists = orders.some(o => o.orden === baseNum);
+    if (exists) {
+      // Agregar inicial del cliente para diferenciar
+      const inicial = nombre ? nombre.charAt(0).toUpperCase() : 'X';
+      baseNum = "DM-" + orderCounter + inicial;
+    }
+    numOrden = baseNum;
+    orderCounter++;
+    localStorage.setItem('dm_counter', orderCounter);
+  }
   const newOrder = {
     id: editId || Date.now().toString(),
     orden: numOrden,
@@ -971,7 +1000,8 @@ window.saveOrder = async () => {
     falla: document.getElementById('falla').value,
     diagnostico: document.getElementById('diagnostico').value,
     reparacion: document.getElementById('reparacion').value,
-    gremio: document.getElementById('gremio').checked
+    gremio: document.getElementById('gremio').checked,
+    fotos: (window._fotosTemp || [])
   };
   loading(true);
   try {
@@ -1091,7 +1121,8 @@ window.renderAdminList = () => {
       (o.nombre||'').toLowerCase().includes(query) ||
       (o.dni||'').includes(query) ||
       (o.tel||'').includes(query) ||
-      (o.serie||'').toLowerCase().includes(query)
+      (o.serie||'').toLowerCase().includes(query) ||
+      (o.orden||'').toLowerCase().includes(query)
     );
   }
   filtered.forEach(o => {
@@ -1112,6 +1143,7 @@ window.renderAdminList = () => {
       <td style="white-space:nowrap;display:flex;gap:4px;align-items:center;">
         <button class="btn btn-primary" style="padding:5px 8px;font-size:0.75rem;" onclick="editOrder('${o.id}')">✏️</button>
         <button class="btn btn-danger" style="padding:5px 8px;font-size:0.75rem;" onclick="deleteOrder('${o.id}')">🗑️</button>
+        ${(o.fotos && o.fotos.length > 0) ? `<button class="btn btn-ghost" style="padding:5px 8px;font-size:0.75rem;" onclick="verFotosHistorial('${o.id}')" title="${o.fotos.length} foto(s)">📷${o.fotos.length}</button>` : ''}
         <button class="btn btn-wa" onclick="openWAModal('${o.id}')" title="Enviar estado por WhatsApp">${WA_ICON_SVG}</button>
       </td>
     </tr>`;
@@ -1138,6 +1170,9 @@ window.editOrder = (id) => {
   document.getElementById('diagnostico').value = o.diagnostico;
   document.getElementById('reparacion').value = o.reparacion;
   document.getElementById('gremio').checked = o.gremio === true;
+  // Cargar fotos existentes
+  window._fotosTemp = o.fotos ? [...o.fotos] : [];
+  renderFotosPreview();
   window.scrollTo({top:0,behavior:'smooth'});
   document.getElementById('form-title').textContent = `Editando: ${o.orden}`;
 };
@@ -1161,6 +1196,7 @@ window.openHistoryModal = (dni) => {
           ${getStatusBadge(o.estado)}
           <button class="btn btn-primary" style="padding:4px 10px;font-size:0.75rem;"
             onclick="closeModal();editOrder('${o.id}')">✏️ Editar</button>
+          ${(o.fotos && o.fotos.length > 0) ? `<button class="btn btn-ghost" style="padding:4px 10px;font-size:0.75rem;" onclick="verFotosHistorial('${o.id}')">📷 ${o.fotos.length} foto(s)</button>` : ''}
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.82rem;color:var(--text2);">
@@ -1192,10 +1228,17 @@ window.filterClients = () => {
   body.innerHTML = '';
   const map = new Map();
   orders.forEach(o => { if (!map.has(o.dni)) map.set(o.dni, {nombre:o.nombre,dni:o.dni,tel:o.tel}); });
+  // También buscar por número de orden (devuelve el cliente de esa orden)
+  let extraByOrden = [];
+  if (q) {
+    const matchOrden = orders.filter(o => (o.orden||'').toLowerCase().includes(q));
+    matchOrden.forEach(o => { if (!map.has(o.dni)) map.set(o.dni, {nombre:o.nombre,dni:o.dni,tel:o.tel}); });
+  }
   [...map.values()].filter(c =>
     (c.nombre||'').toLowerCase().includes(q) ||
     (c.dni||'').includes(q) ||
-    (c.tel||'').includes(q)
+    (c.tel||'').includes(q) ||
+    orders.some(o => o.dni === c.dni && (o.orden||'').toLowerCase().includes(q))
   ).forEach(c => {
     body.innerHTML += `<tr>
       <td>${c.nombre}</td><td>${c.dni}</td><td>${c.tel}</td>
@@ -1224,7 +1267,7 @@ window.consultaCliente = async () => {
   try {
     const snap = await getDocs(collection(db, COLL));
     const all = snap.docs.map(d => d.data());
-    const matches = all.filter(x => x.dni === dni || x.tel === dni);
+    const matches = all.filter(x => x.dni === dni || x.tel === dni || (x.orden||'').toLowerCase() === dni.toLowerCase());
 
     if (!matches.length) {
       res.innerHTML = `<p style="color:var(--accent3);text-align:center;font-size:0.85rem;padding:20px;">No se encontraron órdenes para ese DNI/Teléfono.</p>`;
@@ -1319,7 +1362,83 @@ window.consultaCliente = async () => {
   loading(false);
 };
 
-/* ── BACKUP ── */
+/* ── FOTOS DEL EQUIPO (Admin) ── */
+window._fotosTemp = [];
+
+window.agregarFotos = (e) => {
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (x) => {
+      window._fotosTemp.push({ data: x.target.result, nombre: file.name, fecha: new Date().toISOString() });
+      renderFotosPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+};
+
+window.renderFotosPreview = () => {
+  const container = document.getElementById('fotos-preview');
+  if (!container) return;
+  if (!window._fotosTemp || window._fotosTemp.length === 0) {
+    container.innerHTML = '<span style="font-size:0.75rem;color:var(--text3);padding:8px 0;">Sin fotos agregadas</span>';
+    return;
+  }
+  container.innerHTML = window._fotosTemp.map((f, i) => `
+    <div style="position:relative;width:90px;height:90px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border);cursor:pointer;" onclick="verFotoAdmin(${i})" title="${f.nombre}">
+      <img src="${f.data}" style="width:100%;height:100%;object-fit:cover;">
+      <button onclick="event.stopPropagation();eliminarFoto(${i})" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.7);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);font-size:0.6rem;color:white;padding:2px 4px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;">${f.nombre}</div>
+    </div>`).join('');
+};
+
+window.eliminarFoto = (idx) => {
+  window._fotosTemp.splice(idx, 1);
+  renderFotosPreview();
+};
+
+window.verFotoAdmin = (idx) => {
+  const f = window._fotosTemp[idx];
+  if (!f) return;
+  const modal = document.getElementById('modalFotoAdmin');
+  document.getElementById('foto-admin-img').src = f.data;
+  document.getElementById('foto-admin-nombre').textContent = f.nombre;
+  document.getElementById('foto-admin-fecha').textContent = f.fecha ? new Date(f.fecha).toLocaleString('es') : '';
+  modal.classList.add('open');
+};
+window.closeFotoAdmin = () => document.getElementById('modalFotoAdmin').classList.remove('open');
+
+window.verFotosHistorial = (id) => {
+  const o = orders.find(x => x.id === id);
+  if (!o || !o.fotos || o.fotos.length === 0) { alert('Esta orden no tiene fotos.'); return; }
+  window._fotosTemp = [...o.fotos];
+  // Abrir modal de fotos del historial
+  const modal = document.getElementById('modalFotosHistorial');
+  document.getElementById('fotos-historial-titulo').textContent = `📷 Fotos – ${o.orden} | ${o.modelo||''}`;
+  renderFotosHistorial(o.fotos);
+  modal.classList.add('open');
+};
+
+function renderFotosHistorial(fotos) {
+  const container = document.getElementById('fotos-historial-grid');
+  container.innerHTML = fotos.map((f, i) => `
+    <div style="position:relative;width:120px;height:120px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border);cursor:pointer;" onclick="verFotoHistorialSingle('${encodeURIComponent(f.data)}','${encodeURIComponent(f.nombre||'')}','${encodeURIComponent(f.fecha||'')}')" title="${f.nombre||''}">
+      <img src="${f.data}" style="width:100%;height:100%;object-fit:cover;">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);font-size:0.6rem;color:white;padding:2px 4px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;">${f.nombre||''}</div>
+    </div>`).join('');
+}
+
+window.verFotoHistorialSingle = (data, nombre, fecha) => {
+  const modal = document.getElementById('modalFotoAdmin');
+  document.getElementById('foto-admin-img').src = decodeURIComponent(data);
+  document.getElementById('foto-admin-nombre').textContent = decodeURIComponent(nombre);
+  document.getElementById('foto-admin-fecha').textContent = fecha ? new Date(decodeURIComponent(fecha)).toLocaleString('es') : '';
+  modal.classList.add('open');
+};
+window.closeFotosHistorial = () => document.getElementById('modalFotosHistorial').classList.remove('open');
+
+
 window.downloadBackup = () => {
   const data = JSON.stringify({ orders, counter: orderCounter }, null, 2);
   const a = document.createElement('a');
@@ -1369,6 +1488,8 @@ window.resetForm = () => {
   document.getElementById('estado').value = 'No Visto';
   document.getElementById('gremio').checked = false;
   document.getElementById('form-title').textContent = 'Nueva Orden de Trabajo';
+  window._fotosTemp = [];
+  renderFotosPreview();
 };
 
 /* ── LOGO ── */
@@ -1400,6 +1521,30 @@ window.copyLink = () => {
 
 </script>
 
+<!-- MODAL: VER FOTO INDIVIDUAL (Admin) -->
+<div id="modalFotoAdmin" class="modal">
+  <div class="modal-box" style="max-width:600px;text-align:center;">
+    <button onclick="closeFotoAdmin()" style="position:absolute;right:16px;top:16px;" class="btn btn-ghost">✕</button>
+    <h3 style="font-family:var(--font-display);color:var(--accent);margin-bottom:14px;">📷 Vista de Foto</h3>
+    <img id="foto-admin-img" src="" style="max-width:100%;max-height:60vh;border-radius:var(--radius);border:1px solid var(--border);object-fit:contain;">
+    <div style="margin-top:10px;">
+      <p id="foto-admin-nombre" style="font-size:0.82rem;color:var(--text);font-weight:600;margin-bottom:3px;"></p>
+      <p id="foto-admin-fecha" style="font-size:0.75rem;color:var(--text3);"></p>
+    </div>
+    <button onclick="closeFotoAdmin()" class="btn btn-ghost" style="margin-top:14px;">Cerrar</button>
+  </div>
+</div>
+
+<!-- MODAL: GALERÍA FOTOS HISTORIAL (Admin) -->
+<div id="modalFotosHistorial" class="modal">
+  <div class="modal-box" style="max-width:700px;">
+    <button onclick="closeFotosHistorial()" style="position:absolute;right:16px;top:16px;" class="btn btn-ghost">✕</button>
+    <h3 id="fotos-historial-titulo" style="font-family:var(--font-display);color:var(--accent);margin-bottom:16px;font-size:1rem;"></h3>
+    <div id="fotos-historial-grid" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;"></div>
+    <button onclick="closeFotosHistorial()" class="btn btn-ghost" style="margin-top:18px;width:100%;">Cerrar</button>
+  </div>
+</div>
+
 <!-- Close theme panel on outside click -->
 <script>
 document.addEventListener('click', e => {
@@ -1409,7 +1554,13 @@ document.addEventListener('click', e => {
   }
 });
 document.querySelectorAll('.modal').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  m.addEventListener('click', e => {
+    if (e.target === m) {
+      m.classList.remove('open');
+      if (m.id === 'modalFotoAdmin') closeFotoAdmin && closeFotoAdmin();
+      if (m.id === 'modalFotosHistorial') closeFotosHistorial && closeFotosHistorial();
+    }
+  });
 });
 </script>
 </body>
