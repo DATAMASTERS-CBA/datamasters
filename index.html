@@ -1088,6 +1088,21 @@ window.openWAModal = (id) => {
   msgParts.push('*Garantia:* ' + calcWarrantyText(o.fechaOut, o.garantiaDias));
   if (o.diagnostico) msgParts.push('', '*Diagnostico:* ' + o.diagnostico);
   if (o.reparacion) msgParts.push('', '*Trabajo realizado:* ' + o.reparacion);
+  // Crédito del cliente (suma todas sus órdenes)
+  const clientOrders = orders.filter(x => x.dni === o.dni);
+  const totalCredito = clientOrders.reduce((sum, x) => sum + (parseFloat(x.credito) || 0), 0);
+  if (totalCredito !== 0) {
+    msgParts.push('');
+    if (totalCredito > 0) {
+      msgParts.push('💵 *Saldo a tu favor: $' + totalCredito.toLocaleString('es') + '*');
+      msgParts.push('Podés usar este saldo en tu próxima reparación.');
+    } else {
+      msgParts.push('💵 *Saldo pendiente: $' + Math.abs(totalCredito).toLocaleString('es') + '*');
+      msgParts.push('Recordá que tenés un saldo pendiente de pago.');
+    }
+    const motivos = clientOrders.filter(x => x.creditoMotivo).map(x => '• ' + x.creditoMotivo).join('\n');
+    if (motivos) msgParts.push(motivos);
+  }
   msgParts.push('', 'Ante cualquier consulta estamos disponibles.', '*Data Masters* | WhatsApp: ' + empresaNum);
   document.getElementById('wa-preview-name').textContent = o.nombre;
   document.getElementById('wa-preview-tel').textContent = o.tel;
