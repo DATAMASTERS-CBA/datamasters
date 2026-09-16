@@ -514,7 +514,7 @@ textarea.input { resize: vertical; min-height: 80px; }
   <svg width="30" height="30" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
 </div>
 
-<!-- THEME PANEL -->
+<!-- THEME PANEL (solo accesible desde Admin) -->
 <div id="theme-panel">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
     <h3 style="font-family:var(--font-display);color:var(--text);font-size:1.1rem;">🎨 Apariencia</h3>
@@ -575,18 +575,12 @@ textarea.input { resize: vertical; min-height: 80px; }
           <button class="btn btn-ghost" style="font-size:0.75rem;" onclick="copyLink()">
             <span class="icon-shadow">🔗</span> Copiar Link
           </button>
-          <button class="btn" style="background:#ff6b00;color:white;font-size:0.75rem;"
-            onclick="window.open('https://datamasters-cba.github.io/DATAMASTERSCBA/#','_blank')"
-            title="Tienda Virtual">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-              stroke-linejoin="round" class="icon-shadow" aria-hidden="true">
-              <path d="M3 9l1.5-5h15L21 9"/>
-              <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
-              <path d="M9 13a3 3 0 0 0 6 0"/>
-            </svg>
-            Tienda Virtual
-          </button>
+          <a class="btn" style="background:#ff6b00;color:white;font-size:0.75rem;text-decoration:none;" href="https://datamasters-cba.github.io/DATAMASTERSCBA/#" target="_blank" rel="noopener">
+            <span class="icon-shadow">🛒</span> TIENDA VIRTUAL
+          </a>
+          <a class="btn" style="background:#8b5cf6;color:white;font-size:0.75rem;text-decoration:none;" href="https://datamasters-cba.github.io/GALERIACINERAMA/" target="_blank" rel="noopener">
+            <span class="icon-shadow">🎞️</span> VER GALERIA CINERAMA
+          </a>
         </div>
       </div>
     </div>
@@ -767,7 +761,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXnxWmBJkS86_MQKOTa4QaQb0B9Z7K-cY",
@@ -780,11 +774,22 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const COLL = "orders";
+const SETTINGS_DOC = doc(db, "settings", "global");
 const ADMIN_PASS = "alexalex23";
 
 let orders = [];
 let orderCounter = parseInt(localStorage.getItem('dm_counter')) || 1001;
 let currentWAOrder = null;
+let isAdmin = false;
+
+/* ── TEMA GLOBAL DESDE FIRESTORE ── */
+const themePromise = (async () => {
+  try {
+    const snap = await getDoc(SETTINGS_DOC);
+    if (snap.exists() && snap.data().theme) return snap.data().theme;
+  } catch(e) { console.log('[DataMasters] Tema desde DB no disponible:', e.message); }
+  return null;
+})();
 
 /* ── MATRIX INTRO ── */
 (function() {
@@ -811,12 +816,13 @@ let currentWAOrder = null;
   setTimeout(() => {
     const intro = document.getElementById('matrix-intro');
     intro.classList.add('fade-out');
-    setTimeout(() => {
+    setTimeout(async () => {
       clearInterval(interval);
       document.getElementById('matrix-canvas').remove();
       intro.remove();
       document.getElementById('app').style.opacity = '1';
-      const saved = localStorage.getItem('dm_theme') || 'macos-dark';
+      const dbTheme = await themePromise;
+      const saved = dbTheme || localStorage.getItem('dm_theme') || 'macos-dark';
       applyTheme(saved);
     }, 800);
   }, 3000);
@@ -862,12 +868,20 @@ const themes = {
   ]
 };
 
-function applyTheme(id) {
+async function applyTheme(id, saveToDB = false) {
   document.body.setAttribute('data-theme', id);
   localStorage.setItem('dm_theme', id);
   document.querySelectorAll('.theme-chip').forEach(c => {
     c.classList.toggle('active', c.dataset.theme === id);
   });
+  if (saveToDB && isAdmin) {
+    try {
+      await setDoc(SETTINGS_DOC, { theme: id, updatedAt: new Date().toISOString() }, { merge: true });
+      console.log('[DataMasters] Tema guardado globalmente:', id);
+    } catch(e) {
+      console.log('[DataMasters] Error al guardar tema en la base:', e.message);
+    }
+  }
 }
 window.applyTheme = applyTheme;
 
@@ -886,7 +900,7 @@ function buildThemePanel() {
       chip.dataset.theme = t.id;
       chip.style.cssText = `background:${t.colors[0]};color:${t.colors[1]};border-color:${t.colors[1]}40;`;
       chip.textContent = t.label;
-      chip.onclick = () => applyTheme(t.id);
+      chip.onclick = () => applyTheme(t.id, true);
       grid.appendChild(chip);
     });
     section.appendChild(grid);
@@ -899,7 +913,10 @@ function buildThemePanel() {
 }
 buildThemePanel();
 
-window.openThemePanel = () => document.getElementById('theme-panel').classList.add('open');
+window.openThemePanel = () => {
+  if (!isAdmin) { alert('Solo el administrador puede cambiar la apariencia.'); return; }
+  document.getElementById('theme-panel').classList.add('open');
+};
 window.closeThemePanel = () => document.getElementById('theme-panel').classList.remove('open');
 
 /* ── HELPERS ── */
@@ -944,6 +961,7 @@ showSection('client');
 
 window.checkAdmin = () => {
   if (prompt("Clave de Administrador:") === ADMIN_PASS) {
+    isAdmin = true;
     showSection('admin');
     loadOrders();
     updateWADisplay();
