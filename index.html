@@ -406,6 +406,8 @@ textarea.input { resize: vertical; min-height: 80px; }
 .data-table tr:hover td { background: var(--bg3); }
 .row-novisto td { background: color-mix(in srgb, #f39c12 15%, transparent) !important; font-weight: 600; }
 .row-reentry { border-left: 4px solid var(--accent3) !important; }
+.row-history td { opacity: 0.85; }
+.row-history:hover td { opacity: 1; }
 .blink { animation: blinker 1.2s ease-in-out infinite; color: var(--accent3); font-weight: 700; }
 @keyframes blinker { 50% { opacity: 0; } }
 
@@ -490,6 +492,27 @@ textarea.input { resize: vertical; min-height: 80px; }
 .credito-deuda  { background: color-mix(in srgb, #ff453a 18%, var(--bg2)); border: 1.5px solid #ff453a; border-radius: var(--radius); padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
 .credito-cero   { background: color-mix(in srgb, var(--text3) 12%, var(--bg2)); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
 
+/* ── Filtros admin ── */
+.filter-btn { font-size: 0.76rem; padding: 6px 12px; }
+.filter-btn.active {
+  background: var(--accent) !important;
+  color: white !important;
+  border-color: var(--accent) !important;
+  font-weight: 700 !important;
+}
+
+/* ── Tabs de vista admin (Activas / Historial) ── */
+.view-tab { font-size: 0.82rem; padding: 8px 16px; font-weight: 700; }
+.view-tab.active {
+  background: var(--accent) !important;
+  color: white !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+.view-tab-history.active {
+  background: var(--accent3) !important;
+  border-color: var(--accent3) !important;
+}
 </style>
 </head>
 <body data-theme="macos-dark">
@@ -519,6 +542,9 @@ textarea.input { resize: vertical; min-height: 80px; }
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
     <h3 style="font-family:var(--font-display);color:var(--text);font-size:1.1rem;">🎨 Apariencia</h3>
     <button onclick="closeThemePanel()" class="btn btn-ghost" style="padding:6px 10px;">✕</button>
+  </div>
+  <div style="font-size:0.72rem;color:var(--text3);margin-bottom:14px;line-height:1.4;">
+    El tema seleccionado se guarda para <b>todos los usuarios</b> que ingresen a la app.
   </div>
   <div id="theme-sections"></div>
 </div>
@@ -693,6 +719,24 @@ textarea.input { resize: vertical; min-height: 80px; }
       <button class="btn btn-primary" onclick="renderAdminList()">🔍</button>
     </div>
 
+    <!-- ▼▼▼ TABS: ÓRDENES ACTIVAS / HISTORIAL COMPLETO ▼▼▼ -->
+    <div id="admin-view-tabs" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-ghost view-tab" data-view="active" onclick="setAdminView('active')">📋 Órdenes Activas</button>
+      <button class="btn btn-ghost view-tab view-tab-history" data-view="history" onclick="setAdminView('history')">📚 Historial Completo</button>
+      <span id="admin-view-count" style="font-size:0.78rem;color:var(--text3);margin-left:6px;"></span>
+    </div>
+
+    <!-- ▼▼▼ FILTROS DE ORDENAMIENTO (solo admin) ▼▼▼ -->
+    <div id="admin-filters" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;">
+      <span style="font-size:0.78rem;color:var(--text2);font-weight:700;letter-spacing:0.03em;">🔽 ORDENAR POR:</span>
+      <button class="btn btn-ghost filter-btn" data-sort="default"      onclick="setAdminSort('default')">🔄 Default</button>
+      <button class="btn btn-ghost filter-btn" data-sort="fechaIn-desc"  onclick="setAdminSort('fechaIn-desc')">📅 Ingreso ↓ (más nuevo)</button>
+      <button class="btn btn-ghost filter-btn" data-sort="fechaIn-asc"   onclick="setAdminSort('fechaIn-asc')">📅 Ingreso ↑ (más viejo)</button>
+      <button class="btn btn-ghost filter-btn" data-sort="fechaOut-desc" onclick="setAdminSort('fechaOut-desc')">📤 Salida ↓ (más nuevo)</button>
+      <button class="btn btn-ghost filter-btn" data-sort="fechaOut-asc"  onclick="setAdminSort('fechaOut-asc')">📤 Salida ↑ (más viejo)</button>
+    </div>
+    <!-- ▲▲▲ FIN FILTROS ▲▲▲ -->
+
     <div class="card" style="overflow:hidden;">
       <div style="overflow-x:auto;">
         <table class="data-table">
@@ -781,6 +825,8 @@ let orders = [];
 let orderCounter = parseInt(localStorage.getItem('dm_counter')) || 1001;
 let currentWAOrder = null;
 let isAdmin = false;
+let adminSortMode = 'default';
+let adminViewMode = 'active'; // 'active' = órdenes activas | 'history' = historial completo
 
 /* ── TEMA GLOBAL DESDE FIRESTORE ── */
 const themePromise = (async () => {
@@ -966,6 +1012,31 @@ window.checkAdmin = () => {
     loadOrders();
     updateWADisplay();
   } else { alert("Clave Incorrecta"); }
+};
+
+/* ── TABS DE VISTA ── */
+window.setAdminView = (mode) => {
+  adminViewMode = mode;
+  document.querySelectorAll('.view-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === mode);
+  });
+  // Si entramos al historial y el usuario no eligió otro orden, forzamos "ingreso más reciente"
+  if (mode === 'history' && (adminSortMode === 'default')) {
+    adminSortMode = 'fechaIn-desc';
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.sort === 'fechaIn-desc');
+    });
+  }
+  renderAdminList();
+};
+
+/* ── FILTROS ADMIN ── */
+window.setAdminSort = (mode) => {
+  adminSortMode = mode;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.sort === mode);
+  });
+  renderAdminList();
 };
 
 /* ── FIREBASE OPS ── */
@@ -1154,16 +1225,42 @@ window.closeWAModal = () => {
 window.renderAdminList = () => {
   const query = document.getElementById('admin-search').value.toLowerCase();
   const tbody = document.getElementById('admin-table-body');
+  const countEl = document.getElementById('admin-view-count');
   tbody.innerHTML = "";
-  let filtered = [...orders].sort((a, b) => {
-    if (a.estado === "No Visto" && b.estado !== "No Visto") return -1;
-    if (a.estado !== "No Visto" && b.estado === "No Visto") return 1;
-    return new Date(a.fechaIn) - new Date(b.fechaIn);
-  });
+
+  let filtered = [...orders];
+
+  // ── Ordenamiento según filtro activo ──
+  const tsIn  = o => o.fechaIn  ? new Date(o.fechaIn).getTime()  : 0;
+  const tsOut = o => o.fechaOut ? new Date(o.fechaOut).getTime() : 0;
+
+  if (adminSortMode === 'fechaIn-desc') {
+    filtered.sort((a, b) => tsIn(b) - tsIn(a));
+  } else if (adminSortMode === 'fechaIn-asc') {
+    filtered.sort((a, b) => tsIn(a) - tsIn(b));
+  } else if (adminSortMode === 'fechaOut-desc') {
+    filtered.sort((a, b) => tsOut(b) - tsOut(a));
+  } else if (adminSortMode === 'fechaOut-asc') {
+    filtered.sort((a, b) => tsOut(a) - tsOut(b));
+  } else {
+    // Default: No Visto primero, luego fecha ingreso ascendente
+    filtered.sort((a, b) => {
+      if (a.estado === "No Visto" && b.estado !== "No Visto") return -1;
+      if (a.estado !== "No Visto" && b.estado === "No Visto") return 1;
+      return new Date(a.fechaIn) - new Date(b.fechaIn);
+    });
+  }
+
+  // ── Filtro por modo de vista ──
   const HIDE = ["VENDIDO","RETIRADO SIN REPARACION","RETIRADO CON REPARACION","ABANDONADO"];
   if (!query) {
-    filtered = filtered.filter(o => !HIDE.includes(o.estado.toUpperCase()));
+    if (adminViewMode === 'active') {
+      // Órdenes activas: ocultar los estados finales
+      filtered = filtered.filter(o => !HIDE.includes(o.estado.toUpperCase()));
+    }
+    // En modo 'history': mostrar TODO (sin ocultar)
   } else {
+    // Con búsqueda: buscamos en todos los estados
     filtered = filtered.filter(o =>
       (o.nombre||'').toLowerCase().includes(query) ||
       (o.dni||'').includes(query) ||
@@ -1172,10 +1269,26 @@ window.renderAdminList = () => {
       (o.orden||'').toLowerCase().includes(query)
     );
   }
+
+  // ── Contador ──
+  if (countEl) {
+    const label = adminViewMode === 'history' ? 'registros en historial' : 'órdenes visibles';
+    countEl.textContent = `${filtered.length} ${label}`;
+  }
+
+  // ── Render de filas ──
   filtered.forEach(o => {
     const reentry = orders.some(x => x.serie === o.serie && x.id !== o.id && x.dni !== o.dni);
     const isNew = o.estado === "No Visto";
-    const rowClass = isNew ? 'row-novisto' : (reentry ? 'row-reentry' : '');
+    let rowClass = '';
+    if (adminViewMode === 'history') {
+      rowClass = 'row-history';
+    } else if (isNew) {
+      rowClass = 'row-novisto';
+    } else if (reentry) {
+      rowClass = 'row-reentry';
+    }
+
     tbody.innerHTML += `<tr class="${rowClass}">
       <td><b style="color:var(--accent)">${o.orden}</b></td>
       <td>${formatDate(o.fechaIn)}</td>
