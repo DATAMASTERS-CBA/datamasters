@@ -542,9 +542,6 @@ textarea.input { resize: vertical; min-height: 80px; }
       <button class="btn btn-primary" style="font-size:0.78rem;" onclick="checkAdmin()">
         <span class="icon-shadow">🔐</span> Admin
       </button>
-      <button class="btn btn-ghost" style="padding:8px 10px;" onclick="openThemePanel()" title="Apariencia">
-        <span class="icon-shadow" style="font-size:1.1rem;">⚙️</span>
-      </button>
     </div>
   </header>
 
@@ -577,6 +574,18 @@ textarea.input { resize: vertical; min-height: 80px; }
           </button>
           <button class="btn btn-ghost" style="font-size:0.75rem;" onclick="copyLink()">
             <span class="icon-shadow">🔗</span> Copiar Link
+          </button>
+          <button class="btn" style="background:#ff6b00;color:white;font-size:0.75rem;"
+            onclick="window.open('https://datamasters-cba.github.io/DATAMASTERSCBA/#','_blank')"
+            title="Tienda Virtual">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" class="icon-shadow" aria-hidden="true">
+              <path d="M3 9l1.5-5h15L21 9"/>
+              <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
+              <path d="M9 13a3 3 0 0 0 6 0"/>
+            </svg>
+            Tienda Virtual
           </button>
         </div>
       </div>
@@ -774,41 +783,8 @@ const COLL = "orders";
 const ADMIN_PASS = "alexalex23";
 
 let orders = [];
+let orderCounter = parseInt(localStorage.getItem('dm_counter')) || 1001;
 let currentWAOrder = null;
-
-/* ── N° DE SEGUIMIENTO ÚNICO — N-10100 en adelante ──
-   Se calcula el mayor N-XXXXX existente en Firestore + piso local.
-   Cada seguimiento es único e irrepetible. */
-const ORDEN_BASE = 10100;
-const ORDEN_KEY  = 'dm_counter_n';
-
-function computeNextFrom(list) {
-  let maxNum = ORDEN_BASE - 1; // primer número será N-10100
-  (list || []).forEach(o => {
-    const m = String(o.orden || '').match(/^N-(\d+)$/);
-    if (m) { const n = parseInt(m[1], 10); if (n > maxNum) maxNum = n; }
-  });
-  // Piso local: evita reutilizar un número si se borró la última orden
-  const localNext = parseInt(localStorage.getItem(ORDEN_KEY)) || ORDEN_BASE;
-  if (localNext > maxNum + 1) maxNum = localNext - 1;
-  // Siguiente candidato libre (doble verificación)
-  let next = maxNum + 1;
-  while ((list || []).some(o => o.orden === 'N-' + next)) next++;
-  return 'N-' + next;
-}
-
-async function getNextOrderNumberSafe() {
-  try {
-    const snap = await getDocs(collection(db, COLL));
-    orders = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
-  } catch(_) { /* si falla la red, usa el cache local */ }
-  return computeNextFrom(orders);
-}
-
-function saveOrderCounter(numStr) {
-  const n = parseInt(String(numStr).replace(/^N-/, ''), 10);
-  if (!isNaN(n)) localStorage.setItem(ORDEN_KEY, n + 1);
-}
 
 /* ── MATRIX INTRO ── */
 (function() {
@@ -1006,67 +982,58 @@ async function loadOrders() {
 window.saveOrder = async () => {
   const editId = document.getElementById('edit-id').value;
   let numOrden = document.getElementById('orden-num').value;
+  if (!editId) {
+    const nombre = document.getElementById('nombre').value.trim();
+    // Generar número base
+    let baseNum = "DM-" + orderCounter;
+    // Verificar si ya existe ese número de orden (colisión)
+    const exists = orders.some(o => o.orden === baseNum);
+    if (exists) {
+      // Agregar inicial del cliente para diferenciar
+      const inicial = nombre ? nombre.charAt(0).toUpperCase() : 'X';
+      baseNum = "DM-" + orderCounter + inicial;
+    }
+    numOrden = baseNum;
+    orderCounter++;
+    localStorage.setItem('dm_counter', orderCounter);
+  }
+  const newOrder = {
+    id: editId || Date.now().toString(),
+    orden: numOrden,
+    nombre: document.getElementById('nombre').value,
+    dni: document.getElementById('dni').value,
+    tel: document.getElementById('tel').value,
+    modelo: document.getElementById('modelo').value,
+    serie: document.getElementById('serie').value,
+    accesorios: document.getElementById('accesorios').value,
+    fechaIn: document.getElementById('fecha-in').value,
+    fechaOut: document.getElementById('fecha-out').value,
+    estado: document.getElementById('estado').value,
+    garantiaDias: parseInt(document.getElementById('garantia-inicial').value) || 0,
+    precio: document.getElementById('precio').value,
+    falla: document.getElementById('falla').value,
+    diagnostico: document.getElementById('diagnostico').value,
+    reparacion: document.getElementById('reparacion').value,
+    gremio: document.getElementById('gremio').checked,
+    fotos: (window._fotosTemp || [])
+  };
   loading(true);
   try {
-    if (!editId) {
-      // Generar N° único consultando Firestore (fuente de verdad)
-      numOrden = await getNextOrderNumberSafe();
-    }
-    const newOrder = {
-      id: editId || Date.now().toString(),
-      orden: numOrden,
-      nombre: document.getElementById('nombre').value,
-      dni: document.getElementById('dni').value,
-      tel: document.getElementById('tel').value,
-      modelo: document.getElementById('modelo').value,
-      serie: document.getElementById('serie').value,
-      accesorios: document.getElementById('accesorios').value,
-      fechaIn: document.getElementById('fecha-in').value,
-      fechaOut: document.getElementById('fecha-out').value,
-      estado: document.getElementById('estado').value,
-      garantiaDias: parseInt(document.getElementById('garantia-inicial').value) || 0,
-      precio: document.getElementById('precio').value,
-      falla: document.getElementById('falla').value,
-      diagnostico: document.getElementById('diagnostico').value,
-      reparacion: document.getElementById('reparacion').value,
-      gremio: document.getElementById('gremio').checked,
-      fotos: (window._fotosTemp || [])
-    };
     if (editId) {
       const existing = orders.find(o => o.id === editId);
       await updateDoc(doc(db, COLL, existing._docId), newOrder);
     } else {
-      const created = await addDoc(collection(db, COLL), newOrder);
-      saveOrderCounter(numOrden);
-      // Red de seguridad: si dos admins guardaron a la vez, corregir
-      try {
-        const verify = await getDocs(collection(db, COLL));
-        const sameNum = verify.docs.filter(d => d.data().orden === numOrden);
-        if (sameNum.length > 1) {
-          let maxN = ORDEN_BASE - 1;
-          verify.docs.forEach(d => {
-            const m = String(d.data().orden || '').match(/^N-(\d+)$/);
-            if (m) { const n = parseInt(m[1], 10); if (n > maxN) maxN = n; }
-          });
-          let fixed = 'N-' + (maxN + 1);
-          while (verify.docs.some(d => d.data().orden === fixed)) {
-            maxN++; fixed = 'N-' + (maxN + 1);
-          }
-          await updateDoc(doc(db, COLL, created.id), { orden: fixed });
-          numOrden = fixed;
-          saveOrderCounter(fixed);
-        }
-      } catch(_) {}
+      await addDoc(collection(db, COLL), newOrder);
     }
     await loadOrders();
     resetForm();
     const ESTADOS_WA = ['RETIRADO CON REPARACION', 'RETIRADO SIN REPARACION'];
     if (ESTADOS_WA.includes(newOrder.estado.toUpperCase())) {
-      if (confirm('✅ Orden guardada correctamente.\nN° Seguimiento: ' + numOrden + '\n\n¿Querés enviar el estado al cliente por WhatsApp?')) {
+      if (confirm('✅ Orden guardada correctamente.\n\n¿Querés enviar el estado al cliente por WhatsApp?')) {
         openWAModal(newOrder.id);
       }
     } else {
-      alert("Orden guardada correctamente.\nN° Seguimiento: " + numOrden);
+      alert("Orden guardada correctamente.");
     }
   } catch(e) { alert("Error al guardar: " + e.message); }
   loading(false);
@@ -1715,8 +1682,7 @@ document.addEventListener('keydown', e => {
 });
 
 window.downloadBackup = () => {
-  const nextOrder = computeNextFrom(orders); // ej "N-10101"
-  const data = JSON.stringify({ orders, nextOrder }, null, 2);
+  const data = JSON.stringify({ orders, counter: orderCounter }, null, 2);
   const a = document.createElement('a');
   a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(data);
   a.download = `Respaldo_DataMasters_${new Date().toLocaleDateString('es').replace(/\//g,'-')}.json`;
@@ -1727,8 +1693,11 @@ window.loadBackup = async (e) => {
   reader.onload = async (x) => {
     const imp = JSON.parse(x.target.result);
     const impOrders = imp.orders || [];
+    orderCounter = imp.counter || 1001;
+    localStorage.setItem('dm_counter', orderCounter);
     loading(true);
     try {
+      // Cargar IDs ya existentes en Firestore para evitar duplicados
       const snap = await getDocs(collection(db, COLL));
       const existingKeys = new Set(
         snap.docs.map(d => { const dat = d.data(); return dat.id || dat.orden; })
